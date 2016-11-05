@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using ASTV.Models.Generic;
 namespace ASTV.Models.Employee {
     public class Education: IEntityBase {
+        
          public int Id { get; set; }
          public EducationLevel Level { get; set; }
 

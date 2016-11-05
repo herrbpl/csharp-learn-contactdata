@@ -4,6 +4,10 @@ using System.Collections.Generic;
 using ASTV.Models.Generic;
 namespace ASTV.Models.Employee {
     public class ContactData: IEntityBase {
+
+         public ContactData() {
+           Education = new List<Education>();
+         }
          public int Id { get; set; }
 
          public int EmployeeId { get; set; }

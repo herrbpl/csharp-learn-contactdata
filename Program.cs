@@ -1,12 +1,14 @@
 ﻿using System;
 using ASTV.Models.Employee;
-
+using ASTV.Models.Generic;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Hosting.Internal;
 using ASTV.Services;
+
 
 namespace ConsoleApplication
 {
@@ -31,15 +33,55 @@ namespace ConsoleApplication
         {
             // Add framework services.
             services.AddDbContext<EmployeeContext>(options =>
-               options.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=EFGetStarted.ConsoleApp.NewDb;Trusted_Connection=True;",b => b.MigrationsAssembly("sitt")));                      
+               options.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;"));                      
         }
     }
     public class Program
     {
         public static void Main(string[] args)
-        {
-            Employee Ee = new Employee();
+        {            
+            Startup s = new Startup(new HostingEnvironment() { ContentRootPath = AppContext.BaseDirectory });
+            DbContextOptionsBuilder<EmployeeContext> optionsBuilder = new DbContextOptionsBuilder<EmployeeContext>();
+            optionsBuilder.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;");
             
+            using (var db = new EmployeeContext(optionsBuilder.Options))
+            {
+                Language ll = new Language { Name="Eesti", Code="EST" };
+                db.Language.Add(ll);
+                db.SaveChanges();
+
+                EducationLevel el = new EducationLevel { Name="Algharidus", Code="ah"};
+
+                Education edu = new Education();
+                edu.SchoolName = "Uus kool";
+                edu.YearCompleted = 2015;
+                edu.NameOfDegree = "uu";
+                edu.Level = el;
+                
+
+                Employee EE = new Employee { Name = "Siim Aus", EmployeeId="0203" };
+                ContactData cd = new ContactData();
+                EE.ContactData = cd;                
+                cd.Employee = EE; // should this come automatically ?
+                cd.Education.Add(edu);
+                cd.FirstName = "Siim";
+                cd.LastName = "Aus";
+                cd.JobTitle = "IT Director";
+                cd.ContactLanguage = ll; 
+                edu.ContactData = cd;
+                edu.ContactDataId = cd.Id;
+                db.Employees.Add( EE);
+                db.SaveChanges();
+
+                EmployeeRepository<EmployeeContext> er = new EmployeeRepository<EmployeeContext>(db);
+                foreach(Employee ex in er.GetAll()) {
+                    Console.WriteLine("{0} {1} {2}", ex.Id, ex.Name, ex.EmployeeId);
+                }
+            }
+
+            
+
+
             Console.WriteLine("Hello World!");
         }
     }

@@ -11,7 +11,11 @@ namespace ASTV.Services {
         public DbSet<Education> Education {get; set;}
         public DbSet<Language> Language {get; set;}
         public DbSet<EducationLevel> EducationLevel {get; set;}
+        public EmployeeContext(DbContextOptions<EmployeeContext> options)
+            : base(options)
+        {
 
+        }
         protected override void OnConfiguring(DbContextOptionsBuilder builder)
         {
             //builder.UseSqlServer(@"Server=TISCALA.NTSERVER2.SISE;Database=scalaDB;Trusted_Connection=True;MultipleActiveResultSets=true");
