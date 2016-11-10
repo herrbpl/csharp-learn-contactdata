@@ -89,28 +89,7 @@ namespace ASTV.Models.Employee {
                   var Data = Newtonsoft.Json.JsonConvert.DeserializeObject<ContactDataV2>(value);
 
                   Data.CopyPropertiesTo(this, new List<string> { "Serialized"});
-
-                  //var sourceProperties =  Data.GetType().GetTypeInfo().GetProperties().ToList();
-                  //var destProperties = this.GetType().GetTypeInfo().GetProperties().ToList();
-                  /*
-                  var sourceProps = Data.GetType().GetTypeInfo().GetProperties().Where(x => x.CanRead).ToList();
-                  var destProps = this.GetType().GetTypeInfo().GetProperties()
-                          .Where(x => x.CanWrite)
-                          .ToList();
-
-                  foreach (var sourceProp in sourceProps)
-                  {
-                      if (sourceProp.Name.Equals("Serialized")) { continue; }
-                      
-                      if (destProps.Any(x => x.Name == sourceProp.Name))
-                      {
-                          var p = destProps.First(x => x.Name == sourceProp.Name);
-                          p.SetValue(this, sourceProp.GetValue(Data, null), null);
-                      }
-
-                  }      
-                  */                             
-
+                 
               } catch ( System.Exception e) {                  
                   throw(e);
               }

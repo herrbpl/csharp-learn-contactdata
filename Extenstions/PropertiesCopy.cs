@@ -26,7 +26,9 @@ namespace ASTV.Extenstions {
                 if (destProps.Any(x => x.Name == sourceProp.Name))
                 {
                     var p = destProps.First(x => x.Name == sourceProp.Name);
-                    p.SetValue(dest, sourceProp.GetValue(source, null), null);
+                    if (p.PropertyType.IsAssignableFrom(sourceProp.PropertyType)) {
+                        p.SetValue(dest, sourceProp.GetValue(source, null), null);
+                    }
                 }
 
             }
