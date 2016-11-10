@@ -8,9 +8,10 @@ using ASTV.Services;
 namespace src.Migrations
 {
     [DbContext(typeof(EmployeeContext))]
-    partial class EmployeeContextModelSnapshot : ModelSnapshot
+    [Migration("20161110121105_remove employee link from contact data")]
+    partial class removeemployeelinkfromcontactdata
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasAnnotation("ProductVersion", "1.0.0-rtm-21431")
@@ -43,8 +44,6 @@ namespace src.Migrations
 
                     b.Property<string>("EmailPersonal")
                         .HasAnnotation("MaxLength", 50);
-
-                    b.Property<int>("EmployeeId");
 
                     b.Property<string>("FirstName")
                         .HasAnnotation("MaxLength", 30);
@@ -89,9 +88,6 @@ namespace src.Migrations
 
                     b.HasIndex("ContactLanguageId");
 
-                    b.HasIndex("EmployeeId")
-                        .IsUnique();
-
                     b.ToTable("ContactData");
                 });
 
@@ -134,11 +130,15 @@ namespace src.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
+                    b.Property<int?>("ContactDataId");
+
                     b.Property<string>("EmployeeId");
 
                     b.Property<string>("Name");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ContactDataId");
 
                     b.ToTable("Employees");
                 });
@@ -180,11 +180,6 @@ namespace src.Migrations
                     b.HasOne("ASTV.Models.Generic.Language", "ContactLanguage")
                         .WithMany()
                         .HasForeignKey("ContactLanguageId");
-
-                    b.HasOne("ASTV.Models.Employee.Employee")
-                        .WithOne("ContactData")
-                        .HasForeignKey("ASTV.Models.Employee.ContactData", "EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("ASTV.Models.Employee.Education", b =>
@@ -197,6 +192,13 @@ namespace src.Migrations
                     b.HasOne("ASTV.Models.Generic.EducationLevel", "Level")
                         .WithMany()
                         .HasForeignKey("LevelId");
+                });
+
+            modelBuilder.Entity("ASTV.Models.Employee.Employee", b =>
+                {
+                    b.HasOne("ASTV.Models.Employee.ContactData", "ContactData")
+                        .WithMany()
+                        .HasForeignKey("ContactDataId");
                 });
         }
     }
