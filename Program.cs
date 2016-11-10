@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting.Internal;
 using ASTV.Services;
-
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace ConsoleApplication
@@ -75,7 +75,10 @@ namespace ConsoleApplication
                 //db.SaveChanges();
 
                 EmployeeRepository<EmployeeContext> er = new EmployeeRepository<EmployeeContext>(db);
-                foreach(Employee ex in er.GetAll()) {
+
+            
+
+                foreach(Employee ex in er.GetAll().Where( x => x.Id >= 9)) {
                     
 
                     

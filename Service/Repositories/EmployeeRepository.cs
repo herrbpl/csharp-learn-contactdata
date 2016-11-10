@@ -16,7 +16,7 @@ namespace ASTV.Services {
         public override IQueryable<Employee> GetAll() {
             _context.Language.ToList();
             _context.EducationLevel.ToList();
-            
+
             return _context.Employees.
                 Include(c => c.ContactData).
                 ThenInclude(e => e.Education).                
