@@ -1,10 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
-using System.Reflection;
 using ASTV.Models.Generic;
 using ASTV.Extenstions;
 using Newtonsoft.Json;
-using System.Linq;
+
 
 
 namespace ASTV.Models.Employee {

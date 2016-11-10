@@ -2,6 +2,8 @@ using ASTV.Models.Generic;
 using System.Linq;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System;
 
 namespace ASTV.Services {
     public class EntityBaseRepository<T, TContext> : 
@@ -27,12 +29,22 @@ namespace ASTV.Services {
                 return c.AsQueryable();
             }
             // should throw exception.
-            IEnumerable<T> a = new List<T>();
-            a.Append(new T { Id = 1 });
-            a.Append(new T { Id = 2 });
-            a.Append(new T { Id = 3 });
-            return a.AsQueryable();
+           throw new NotImplementedException("Not implemented"); 
 
+        }
+        public virtual void Add(T entity)
+        {
+             if (_context is DbContext) {
+                DbContext c = (DbContext)(object) _context;
+                EntityEntry dbEntityEntry = c.Entry<T>(entity);
+                c.Set<T>().Add(entity);
+                return;
+             }
+             if (_context is IList<T>) {
+                ((IList<T>)(object)_context).Add(entity);
+                return;
+             }
+             throw new NotImplementedException("Not implemented"); 
         }
     }
 }

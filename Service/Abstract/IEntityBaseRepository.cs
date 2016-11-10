@@ -6,6 +6,7 @@ namespace ASTV.Services {
         where T: class, IEntityBase, new()  
         where TContext : class
     {
-        IQueryable<T> GetAll();        
+        IQueryable<T> GetAll(); 
+        void Add(T entity);    
     }
 }

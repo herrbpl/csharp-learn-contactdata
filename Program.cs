@@ -82,11 +82,26 @@ namespace ConsoleApplication
             
             using (var db = new EmployeeContext(optionsBuilder.Options))
             {
-                Language ll = new Language { Name="Eesti", Code="EST" };
-                db.Language.Add(ll);
-                db.SaveChanges();
 
-                EducationLevel el = new EducationLevel { Name="Algharidus", Code="ah"};
+                LanguageRepository<EmployeeContext> lr = new LanguageRepository<EmployeeContext>(db);
+
+                // add language;
+                if (!lr.GetAll().Any(l => l.Code=="EE")) {
+                     lr.Add( new Language { Name="Eesti", Code="EE" });
+                }
+
+
+                Language ll = lr.GetAll().Where(l => l.Code=="EE").FirstOrDefault();
+            
+
+                EntityBaseRepository<EducationLevel, EmployeeContext> elr = new EntityBaseRepository<EducationLevel, EmployeeContext>(db);
+
+                 // add language;
+                if (!elr.GetAll().Any(l => l.Code=="ah")) {
+                     elr.Add(  new EducationLevel { Name="Algharidus", Code="ah"});
+                }
+
+                EducationLevel el = elr.GetAll().Where(l => l.Code=="ah").FirstOrDefault();
 
                 Education edu = new Education();
                 edu.SchoolName = "Uus kool";
@@ -106,10 +121,9 @@ namespace ConsoleApplication
                 edu.ContactData = cd;
                 edu.ContactDataId = cd.Id;
                 //db.Employees.Add( EE);
-                //db.SaveChanges();
+                db.SaveChanges();
 
                 EmployeeRepository<EmployeeContext> er = new EmployeeRepository<EmployeeContext>(db);
-
                 
 
                 foreach(Employee ex in er.GetAll().Where( x => x.Id >= 9)) {
