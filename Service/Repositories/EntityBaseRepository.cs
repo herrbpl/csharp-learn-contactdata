@@ -13,25 +13,25 @@ namespace ASTV.Services {
         public EntityBaseRepository(TContext context) {
             this._context = context;
         }
-        public virtual IEnumerable<T> GetAll()
+        public virtual IQueryable<T> GetAll()
         {            
             //throw new NotImplementedException("Not implemented!");            
             //return _context.Set<T>().AsEnumerable();
             if (_context is DbContext) {
                 DbContext c = (DbContext)(object) _context;
 
-                return c.Set<T>().AsEnumerable();
+                return c.Set<T>().AsQueryable();
             }
             if (_context is IList<T>) {
                  IList<T> c = (IList<T>)(object) _context;
-                return c.AsEnumerable();
+                return c.AsQueryable();
             }
             // should throw exception.
             IEnumerable<T> a = new List<T>();
             a.Append(new T { Id = 1 });
             a.Append(new T { Id = 2 });
             a.Append(new T { Id = 3 });
-            return a.AsEnumerable();
+            return a.AsQueryable();
 
         }
     }

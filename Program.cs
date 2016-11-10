@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting.Internal;
 using ASTV.Services;
 
+using Newtonsoft.Json;
 
 namespace ConsoleApplication
 {
@@ -33,7 +34,7 @@ namespace ConsoleApplication
         {
             // Add framework services.
             services.AddDbContext<EmployeeContext>(options =>
-               options.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;"));                      
+               options.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True"));                      
         }
     }
     public class Program
@@ -42,7 +43,7 @@ namespace ConsoleApplication
         {            
             Startup s = new Startup(new HostingEnvironment() { ContentRootPath = AppContext.BaseDirectory });
             DbContextOptionsBuilder<EmployeeContext> optionsBuilder = new DbContextOptionsBuilder<EmployeeContext>();
-            optionsBuilder.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;");
+            optionsBuilder.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True");
             
             using (var db = new EmployeeContext(optionsBuilder.Options))
             {
@@ -70,12 +71,21 @@ namespace ConsoleApplication
                 cd.ContactLanguage = ll; 
                 edu.ContactData = cd;
                 edu.ContactDataId = cd.Id;
-                db.Employees.Add( EE);
-                db.SaveChanges();
+                //db.Employees.Add( EE);
+                //db.SaveChanges();
 
                 EmployeeRepository<EmployeeContext> er = new EmployeeRepository<EmployeeContext>(db);
                 foreach(Employee ex in er.GetAll()) {
-                    Console.WriteLine("{0} {1} {2}", ex.Id, ex.Name, ex.EmployeeId);
+                    
+
+                    
+                    //Include(c => c.ContactData).ThenInclude(e => )
+                    string json = Newtonsoft.Json.JsonConvert.SerializeObject(ex, Formatting.Indented, 
+                        new JsonSerializerSettings {
+                                ReferenceLoopHandling = ReferenceLoopHandling.Ignore, 
+                                PreserveReferencesHandling = PreserveReferencesHandling.Objects 
+                        });                    
+                    Console.WriteLine("{0} {1} {2}\n{3}", ex.Id, ex.Name, ex.EmployeeId, json);
                 }
             }
 
