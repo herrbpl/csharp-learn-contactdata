@@ -52,7 +52,7 @@ namespace ConsoleApplication
             
 
             Employee EE = new Employee { Name = "Siim Aus", EmployeeId="0203" };
-            ContactDataV2 cd = new ContactDataV2();
+            ContactData cd = new ContactData();
             //EE.ContactData = cd;                                
             cd.Education.Add(edu);
             cd.FirstName = "Siim";
@@ -120,7 +120,7 @@ namespace ConsoleApplication
                 cd.ContactLanguage = ll; 
                 edu.ContactData = cd;
                 edu.ContactDataId = cd.Id;
-                //db.Employees.Add( EE);
+                db.Employees.Add( EE);
                 db.SaveChanges();
 
                 EmployeeRepository<EmployeeContext> er = new EmployeeRepository<EmployeeContext>(db);

@@ -7,9 +7,9 @@ using Newtonsoft.Json;
 
 
 namespace ASTV.Models.Employee {
-    public class ContactDataV2: IEntityBase {
+    public class ContactData: IEntityBase {
 
-         public ContactDataV2() {
+         public ContactData() {
            Education = new List<Education>();
          }
          public int Id { get; set; }
@@ -77,7 +77,14 @@ namespace ASTV.Models.Employee {
 
          [JsonIgnore]
          public string Serialized {
-           get { return Newtonsoft.Json.JsonConvert.SerializeObject(this,Formatting.Indented); }
+           get { return Newtonsoft.Json.JsonConvert.SerializeObject(this,Formatting.Indented,
+            new JsonSerializerSettings {
+                                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                                //, 
+                                //PreserveReferencesHandling = PreserveReferencesHandling.Objects 
+                        }
+           
+           ); }
            set { 
               if (string.IsNullOrEmpty(value))
                 {
@@ -85,7 +92,7 @@ namespace ASTV.Models.Employee {
                 }
 
               try {          
-                  var Data = Newtonsoft.Json.JsonConvert.DeserializeObject<ContactDataV2>(value);
+                  var Data = Newtonsoft.Json.JsonConvert.DeserializeObject<ContactData>(value);
 
                   Data.CopyPropertiesTo(this, new List<string> { "Serialized"});
                  

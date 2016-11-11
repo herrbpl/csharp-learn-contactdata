@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 using ASTV.Models.Generic;
 namespace ASTV.Models.Employee {
-    public class ContactData: IEntityBase {
+    public class ContactDataV1: IEntityBase {
 
-         public ContactData() {
+         public ContactDataV1() {
            Education = new List<Education>();
          }
          public int Id { get; set; }
