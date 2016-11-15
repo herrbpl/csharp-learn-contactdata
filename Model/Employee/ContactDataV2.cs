@@ -77,36 +77,8 @@ namespace ASTV.Models.Employee {
 
          [JsonIgnore]
          public string Serialized {
-           get {  /*
-            return Newtonsoft.Json.JsonConvert.SerializeObject(this,Formatting.Indented,
-            new JsonSerializerSettings {
-                                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-                                //, 
-                                //PreserveReferencesHandling = PreserveReferencesHandling.Objects 
-                        }
-           
-           );   */
-                return this.Serialize(null); 
-           }
-           set { 
-              /*
-              if (string.IsNullOrEmpty(value))
-                {
-                    return;
-                }
-
-              try {          
-                  var Data = Newtonsoft.Json.JsonConvert.DeserializeObject<ContactData>(value);
-
-                  Data.CopyPropertiesTo(this, new List<string> { "Serialized", "Id"});
-                 
-              } catch ( System.Exception e) {                  
-                  throw(e);
-              }
-              */
-              this.DeSerialize(this, value,new List<string> { "Serialized", "Id"} );
-              
-           }
+           get {   return this.Serialize(null); }
+           set { this.DeSerialize(this, value,new List<string> { "Serialized", "Id"} );  }
          }
     }
 }

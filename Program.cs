@@ -132,7 +132,7 @@ namespace ConsoleApplication
 
                 
 
-                foreach(Employee ex in er.GetAll().Where( x => x.Id >= 21)) {
+                foreach(Employee ex in er.GetAll().Where( x => x.Id >= 12)) {
                     
 
                     
@@ -144,7 +144,9 @@ namespace ConsoleApplication
                                 //PreserveReferencesHandling = PreserveReferencesHandling.Objects 
                         });                    
                     Console.WriteLine("{0} {1} {2}\n{3}", ex.Id, ex.Name, ex.EmployeeId, json);
+                    er.Delete(ex);
                 }       
+                db.SaveChanges();
 
             }
 

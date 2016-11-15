@@ -6,45 +6,36 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
 
 namespace ASTV.Services {
+    /// <summary>
+    /// Base repository
+    ///
+    /// Origin <see><a href="https://chsakell.com/2016/06/23/rest-apis-using-asp-net-core-and-entity-framework-core/">https://chsakell.com/2016/06/23/rest-apis-using-asp-net-core-and-entity-framework-core/</a></see>
+    ///</summary>
     public class EntityBaseRepository<T, TContext> : 
         IEntityBaseRepository<T, TContext> 
         where T: class, IEntityBase, new()  
-        where TContext : class
+        where TContext : DbContext
      {
         protected TContext _context;
         public EntityBaseRepository(TContext context) {
             this._context = context;
         }
-        public virtual IQueryable<T> GetAll()
-        {            
-            //throw new NotImplementedException("Not implemented!");            
-            //return _context.Set<T>().AsEnumerable();
-            if (_context is DbContext) {
-                DbContext c = (DbContext)(object) _context;
-
-                return c.Set<T>().AsQueryable();
-            }
-            if (_context is IList<T>) {
-                 IList<T> c = (IList<T>)(object) _context;
-                return c.AsQueryable();
-            }
-            // should throw exception.
-           throw new NotImplementedException("Not implemented"); 
-
+        public virtual IList<T> GetAll()
+        {                        
+            return _context.Set<T>().ToList();             
         }
         public virtual void Add(T entity)
         {
-             if (_context is DbContext) {
-                DbContext c = (DbContext)(object) _context;
-                EntityEntry dbEntityEntry = c.Entry<T>(entity);
-                c.Set<T>().Add(entity);
-                return;
-             }
-             if (_context is IList<T>) {
-                ((IList<T>)(object)_context).Add(entity);
-                return;
-             }
-             throw new NotImplementedException("Not implemented"); 
+            EntityEntry dbEntityEntry = _context.Entry<T>(entity);
+            _context.Set<T>().Add(entity);                          
         }
+        public virtual void Update(T entity) {
+            EntityEntry dbEntityEntry = _context.Entry<T>(entity);
+            dbEntityEntry.State = EntityState.Modified;
+        }
+        public virtual void Delete(T entity) {
+            EntityEntry dbEntityEntry = _context.Entry<T>(entity);
+            dbEntityEntry.State = EntityState.Deleted;
+        }  
     }
 }
