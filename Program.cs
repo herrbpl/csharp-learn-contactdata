@@ -60,7 +60,7 @@ namespace ConsoleApplication
             cd.JobTitle = "IT Director";
             cd.ContactLanguage = ll; 
             //edu.ContactData = cd;
-            edu.ContactDataId = cd.Id;
+           // edu.ContactDataId = cd.Id;
 
             string xx = cd.Serialized;
             Console.WriteLine("{0} - {1}", cd.FirstName, cd.Serialized );
@@ -119,14 +119,20 @@ namespace ConsoleApplication
                 cd.JobTitle = "IT Director";
                 cd.ContactLanguage = ll; 
                 edu.ContactData = cd;
-                edu.ContactDataId = cd.Id;
+               // edu.ContactDataId = cd.Id;
                 db.Employees.Add( EE);
                 db.SaveChanges();
 
                 EmployeeRepository<EmployeeContext> er = new EmployeeRepository<EmployeeContext>(db);
                 
+                Employee ex2 = er.GetAll().Where( x => x.Id == 2).SingleOrDefault();
+                ex2.ContactData.Serialized = "{\"FirstName\": \"Jaan\"}";
+                ex2.ContactData.ContactLanguage = ll;
+                db.SaveChanges();
 
-                foreach(Employee ex in er.GetAll().Where( x => x.Id >= 9)) {
+                
+
+                foreach(Employee ex in er.GetAll().Where( x => x.Id >= 21)) {
                     
 
                     
@@ -138,7 +144,8 @@ namespace ConsoleApplication
                                 //PreserveReferencesHandling = PreserveReferencesHandling.Objects 
                         });                    
                     Console.WriteLine("{0} {1} {2}\n{3}", ex.Id, ex.Name, ex.EmployeeId, json);
-                }                            
+                }       
+
             }
 
             testSerialize();

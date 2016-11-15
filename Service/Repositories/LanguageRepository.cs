@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using ASTV.Models.Generic;
 
 namespace ASTV.Services {

@@ -94,7 +94,7 @@ namespace ASTV.Models.Employee {
               try {          
                   var Data = Newtonsoft.Json.JsonConvert.DeserializeObject<ContactData>(value);
 
-                  Data.CopyPropertiesTo(this, new List<string> { "Serialized"});
+                  Data.CopyPropertiesTo(this, new List<string> { "Serialized", "Id"});
                  
               } catch ( System.Exception e) {                  
                   throw(e);

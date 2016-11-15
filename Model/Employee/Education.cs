@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using ASTV.Models.Generic;
+using Newtonsoft.Json;
 namespace ASTV.Models.Employee {
     public class Education: IEntityBase {
         
+        [JsonIgnore]
          public int Id { get; set; }
          public EducationLevel Level { get; set; }
 
@@ -21,7 +23,7 @@ namespace ASTV.Models.Employee {
          public string UrlDiploma { get; set;}
 
          // reference to ContactData
-         public int ContactDataId { get; set; }
+         //public int ContactDataId { get; set; }
          public ContactData ContactData { get; set; } // should there be link back to ContactData?         
     }
 }
