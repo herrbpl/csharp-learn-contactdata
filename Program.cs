@@ -1,7 +1,7 @@
 ﻿using System;
 using ASTV.Models.Employee;
 using ASTV.Models.Generic;
-
+using ASTV.Extenstions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -144,15 +144,19 @@ namespace ConsoleApplication
                                 //PreserveReferencesHandling = PreserveReferencesHandling.Objects 
                         });                    
                     Console.WriteLine("{0} {1} {2}\n{3}", ex.Id, ex.Name, ex.EmployeeId, json);
-                    er.Delete(ex);
+                    er.Delete(ex);  // does not delete contactdata.
                 }       
                 db.SaveChanges();
 
+                Employee ex3 = db.Employees.Find(2);
+                if (ex3 != null)
+                    Console.WriteLine("{0} {1} {2}\n{3}", ex3.Id, ex3.Name, ex3.EmployeeId, ex3.ContactData.Serialized);
+
             }
 
-            testSerialize();
+           // testSerialize();
          
-
+            
 
             Console.WriteLine("Hello World!");
         }
