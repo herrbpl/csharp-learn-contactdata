@@ -77,15 +77,19 @@ namespace ASTV.Models.Employee {
 
          [JsonIgnore]
          public string Serialized {
-           get { return Newtonsoft.Json.JsonConvert.SerializeObject(this,Formatting.Indented,
+           get {  /*
+            return Newtonsoft.Json.JsonConvert.SerializeObject(this,Formatting.Indented,
             new JsonSerializerSettings {
                                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore
                                 //, 
                                 //PreserveReferencesHandling = PreserveReferencesHandling.Objects 
                         }
            
-           ); }
+           );   */
+                return this.Serialize(null); 
+           }
            set { 
+              /*
               if (string.IsNullOrEmpty(value))
                 {
                     return;
@@ -99,7 +103,8 @@ namespace ASTV.Models.Employee {
               } catch ( System.Exception e) {                  
                   throw(e);
               }
-
+              */
+              this.DeSerialize(this, value,new List<string> { "Serialized", "Id"} );
               
            }
          }
