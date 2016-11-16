@@ -21,7 +21,7 @@ namespace ASTV.Extenstions {
                 try {          
                     var Data = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(value);
 
-                    Data.CopyPropertiesTo(dest, new List<string> { "Serialized", "Id"});
+                    Data.CopyPropertiesTo(dest, exclude);
                     
                 } catch ( System.Exception e) {                  
                     throw(e);
