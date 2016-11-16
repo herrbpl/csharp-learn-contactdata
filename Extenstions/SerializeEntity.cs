@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 namespace ASTV.Extenstions {
 
     public static class EntitySerialize {
-            public static string Serialize<T>(this T source, IList<string> exclude) {
+            public static string Serialize<T>(this T source, IList<string> exclude)  {
                 return Newtonsoft.Json.JsonConvert.SerializeObject(source,Formatting.Indented,
                             new JsonSerializerSettings {
                                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore

@@ -1,4 +1,7 @@
 using ASTV.Models.Generic;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace ASTV.Services {
     public class LanguageRepository<TContext>: EntityBaseRepository<Language, TContext>                
@@ -9,5 +12,8 @@ namespace ASTV.Services {
         {
                           
         } 
+        public override IList<Language> GetAll() { 
+            return _context.Language.AsNoTracking().ToList();
+        }
     }
 }

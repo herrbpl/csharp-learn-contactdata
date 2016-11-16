@@ -26,7 +26,7 @@ namespace ASTV.Services {
         }
         public virtual void Add(T entity)
         {
-            EntityEntry dbEntityEntry = _context.Entry<T>(entity);
+            EntityEntry dbEntityEntry = _context.Entry<T>(entity);            
             _context.Set<T>().Add(entity);                          
         }
         public virtual void Update(T entity) {
