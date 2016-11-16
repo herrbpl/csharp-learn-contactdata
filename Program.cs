@@ -34,56 +34,28 @@ namespace ConsoleApplication
         {
             // Add framework services.
             services.AddDbContext<EmployeeContext>(options =>
+               options.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True"));
+            services.AddDbContext<ContactDataContext>(options =>
                options.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True"));                      
         }
     }
     public class Program
     {
-        public static void testSerialize() {
-            Language ll = new Language { Name="Eesti", Code="EST" };
-             
-            EducationLevel el = new EducationLevel { Name="Algharidus", Code="ah"};
 
-            Education edu = new Education();
-            edu.SchoolName = "Uus kool";
-            edu.YearCompleted = 2015;
-            edu.NameOfDegree = "uu";
-            edu.Level = el;
-            
-
-            Employee EE = new Employee { Name = "Siim Aus", EmployeeId="0203" };
-            ContactData cd = new ContactData();
-            //EE.ContactData = cd;                                
-            cd.Education.Add(edu);
-            cd.FirstName = "Siim";
-            cd.LastName = "Aus";
-            cd.JobTitle = "IT Director";
-            cd.ContactLanguage = ll; 
-            //edu.ContactData = cd;
-           // edu.ContactDataId = cd.Id;
-
-            string xx = cd.Serialized;
-            Console.WriteLine("{0} - {1}", cd.FirstName, cd.Serialized );
-            string ss = "{\"Id\": 1, \"FirstName\": \"Jaan\"}";
-            cd.Serialized = ss; 
-
-            Console.WriteLine("{0} - {1}", cd.FirstName, cd.Serialized );
-
-            cd.Serialized = xx;
-
-            Console.WriteLine("{0} - {1}", cd.FirstName, cd.Serialized );
-
-        }
         public static void Main(string[] args)
         {            
-            Startup s = new Startup(new HostingEnvironment() { ContentRootPath = AppContext.BaseDirectory });
+            Startup s = new Startup(new HostingEnvironment() { ContentRootPath = AppContext.BaseDirectory }); // is this line neccessary ?
             DbContextOptionsBuilder<EmployeeContext> optionsBuilder = new DbContextOptionsBuilder<EmployeeContext>();
             optionsBuilder.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True");
             
+            
+
             using (var db = new EmployeeContext(optionsBuilder.Options))
             {
+                
+                var cdb = new ContactDataContext();
 
-                LanguageRepository<EmployeeContext> lr = new LanguageRepository<EmployeeContext>(db);
+                LanguageRepository<ContactDataContext> lr = new LanguageRepository<ContactDataContext>(cdb);
 
                 // add language;
                 if (!lr.GetAll().Any(l => l.Code=="EE")) {
@@ -94,8 +66,8 @@ namespace ConsoleApplication
                 Language ll = lr.GetAll().Where(l => l.Code=="EE").FirstOrDefault();
             
 
-                EntityBaseRepository<EducationLevel, EmployeeContext> elr = new EntityBaseRepository<EducationLevel, EmployeeContext>(db);
-
+                EntityBaseRepository<EducationLevel, ContactDataContext> elr = new EntityBaseRepository<EducationLevel, ContactDataContext>(cdb);
+                EntityBaseRepository<ContactData, ContactDataContext> cdrr = new EntityBaseRepository<ContactData, ContactDataContext>(cdb);
                  // add language;
                 if (!elr.GetAll().Any(l => l.Code=="ah")) {
                      elr.Add(  new EducationLevel { Name="Algharidus", Code="ah"});
@@ -112,21 +84,32 @@ namespace ConsoleApplication
 
                 Employee EE = new Employee { Name = "Siim Aus", EmployeeId="0203" };
                 ContactData cd = new ContactData();
-                EE.ContactData = cd;                                
+                //EE.ContactData = cd;                                
                 cd.Education.Add(edu);
                 cd.FirstName = "Siim";
                 cd.LastName = "Aus";
                 cd.JobTitle = "IT Director";
                 cd.ContactLanguage = ll; 
-                edu.ContactData = cd;
+                cd.EmployeeId = EE.EmployeeId;
+                cdrr.Add(cd); // should be add or update;
+                // edu.ContactData = cd;
                // edu.ContactDataId = cd.Id;
                 db.Employees.Add( EE);
                 db.SaveChanges();
+                cdb.SaveChanges();
+                
 
                 EmployeeRepository<EmployeeContext> er = new EmployeeRepository<EmployeeContext>(db);
                 
                 Employee ex2 = er.GetAll().Where( x => x.Id == 2).SingleOrDefault();
-                ex2.ContactData.Serialized = "{\"FirstName\": \"Jaan\", \"ContactLanguage\": { \"Id\":23,\"Code\": \"FI\",\"Name\": \"Svenska\"}}";
+
+                //EntityBaseRepository<ContactData, EmployeeContext> cdr = new EntityBaseRepository<ContactData, EmployeeContext>(db);
+
+                // should i get contact data ?
+                //Console.WriteLine("Foreign Key is: {0}", db.Entry(ex2).Property("ContactDataId").CurrentValue);
+                //ContactData ncd = cdb.ContactData.Find(db.Entry(ex2).Property("ContactDataId").CurrentValue);
+                //ex2.ContactData = ncd;
+                //ex2.ContactData.Serialized = "{\"FirstName\": \"Jaan\", \"ContactLanguage\": { \"Id\":23,\"Code\": \"FI\",\"Name\": \"Svenska\"}}";
                 //ex2.ContactData.ContactLanguage = ll;
                 db.SaveChanges();
 
@@ -151,7 +134,7 @@ namespace ConsoleApplication
                 // how will it work when there is no connected data loaded.
                 Employee ex3 = db.Employees.Find(2);
                 if (ex3 != null)
-                    Console.WriteLine("{0} {1} {2}\n{3}", ex3.Id, ex3.Name, ex3.EmployeeId, ex3.ContactData.Serialized);
+                    Console.WriteLine("{0} {1} {2}\n{3}", ex3.Id, ex3.Name, ex3.EmployeeId, ex3.Serialize(null));
 
             }
 

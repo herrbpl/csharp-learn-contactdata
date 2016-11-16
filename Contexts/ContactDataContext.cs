@@ -1,19 +1,22 @@
-
 using ASTV.Models.Employee;
 using ASTV.Models.Generic;
 using Microsoft.EntityFrameworkCore;
 
-
 namespace ASTV.Services {
-    public class EmployeeContext: DbContext {
-        public DbSet<Employee> Employees {get; set;}
-        //public DbSet<ContactData> ContactData {get; set;}
+
+    public class ContactDataContext: DbContext {
+        
+        public DbSet<ContactData> ContactData {get; set;}
         //public DbSet<Education> Education {get; set;}
-        //public DbSet<Language> Language {get; set;}
-        //public DbSet<EducationLevel> EducationLevel {get; set;}
-        public EmployeeContext(DbContextOptions<EmployeeContext> options)
+        public DbSet<Language> Language {get; set;}
+        public DbSet<EducationLevel> EducationLevel {get; set;}
+        public ContactDataContext(DbContextOptions<ContactDataContext> options)
             : base(options)
         {
+
+        }
+
+        public ContactDataContext(): base() {
 
         }
         protected override void OnConfiguring(DbContextOptionsBuilder builder)
@@ -23,7 +26,11 @@ namespace ASTV.Services {
         }
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            base.OnModelCreating(builder);                        
+            base.OnModelCreating(builder);
+            builder.Entity<ContactData>().Property(p => p.Serialized).HasColumnName("Data");
+            builder.Entity<ContactData>().Ignore(p => p.ContactLanguage); 
+            builder.Entity<ContactData>().Ignore(p => p.Education);
+            
         }
     }
-}
+}    

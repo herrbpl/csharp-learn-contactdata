@@ -1,6 +1,6 @@
 ﻿namespace ASTV.Models.Generic
 {
     public interface IEntityBase {
-        int Id { get; set; }
+       // int Id { get; set; }
     }    
 }

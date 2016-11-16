@@ -5,14 +5,14 @@ using System.Collections.Generic;
 
 namespace ASTV.Services {
     public class LanguageRepository<TContext>: EntityBaseRepository<Language, TContext>                
-        where TContext : EmployeeContext       
+        where TContext : ContactDataContext       
     {        
         public LanguageRepository(TContext context) 
             : base(context)
         {
                           
         } 
-        public override IList<Language> GetAll() { 
+        public override IEnumerable<Language> GetAll() { 
             return _context.Language.AsNoTracking().ToList();
         }
     }

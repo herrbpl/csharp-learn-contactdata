@@ -14,7 +14,10 @@ namespace ASTV.Models.Employee {
          }
          public int Id { get; set; }
 
-         //public int EmployeeId { get; set; }        
+         //public int EmployeeId { get; set; }
+
+         [MaxLength(6)]  
+         public string EmployeeId { get; set; }      
 
          [MaxLength(30)]
          public string FirstName {get; set; }  

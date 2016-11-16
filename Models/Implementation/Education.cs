@@ -5,7 +5,7 @@ namespace ASTV.Models.Employee {
     public class Education: IEntityBase {
         
         [JsonIgnore]
-         public int Id { get; set; }
+         //public int Id { get; set; }
          public EducationLevel Level { get; set; }
 
          [MaxLength(100)]
@@ -24,6 +24,6 @@ namespace ASTV.Models.Employee {
 
          // reference to ContactData
          //public int ContactDataId { get; set; }
-         public ContactData ContactData { get; set; } // should there be link back to ContactData?         
+         //public ContactData ContactData { get; set; } // should there be link back to ContactData?         
     }
 }

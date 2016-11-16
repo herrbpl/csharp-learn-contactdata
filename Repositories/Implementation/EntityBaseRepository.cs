@@ -20,7 +20,7 @@ namespace ASTV.Services {
         public EntityBaseRepository(TContext context) {
             this._context = context;
         }
-        public virtual IList<T> GetAll()
+        public virtual IEnumerable<T> GetAll()
         {                        
             return _context.Set<T>().ToList();             
         }
