@@ -26,6 +26,7 @@ namespace ASTV.Services {
         /// <param name="navigationProperties"></param>
         /// <returns>List of objects T</returns>         
         IEnumerable<T> GetList(Func<T, bool> where, params Expression<Func<T,object>>[] navigationProperties);
+        int Count();
     }
 
     /// <summary>

@@ -40,5 +40,8 @@ namespace ASTV.Services {
                 .Where(where)
                 .ToList<T>().AsEnumerable();
         }
+        public virtual int Count() {
+            return _context.Set<T>().Count();
+        }
     }
 }
