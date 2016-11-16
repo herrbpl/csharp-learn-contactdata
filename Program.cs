@@ -81,38 +81,21 @@ namespace ConsoleApplication
                 edu.NameOfDegree = "uu";
                 edu.Level = el;
                 
-
-                Employee EE = new Employee { Name = "Siim Aus", EmployeeId="0203" };
                 ContactData cd = new ContactData();
-                //EE.ContactData = cd;                                
+                                
                 cd.Education.Add(edu);
                 cd.FirstName = "Siim";
                 cd.LastName = "Aus";
                 cd.JobTitle = "IT Director";
                 cd.ContactLanguage = ll; 
-                cd.EmployeeId = EE.EmployeeId;
+                cd.EmployeeId = "0203";
                 cdrr.Add(cd); // should be add or update;
                 // edu.ContactData = cd;
-               // edu.ContactDataId = cd.Id;
-                db.Employees.Add( EE);
-                db.SaveChanges();
+               // edu.ContactDataId = cd.Id;                
                 cdb.SaveChanges();
                 
 
-                EmployeeRepository<EmployeeContext> er = new EmployeeRepository<EmployeeContext>(db);
-                
-                Employee ex2 = er.GetAll().Where( x => x.Id == 2).SingleOrDefault();
-
-                //EntityBaseRepository<ContactData, EmployeeContext> cdr = new EntityBaseRepository<ContactData, EmployeeContext>(db);
-
-                // should i get contact data ?
-                //Console.WriteLine("Foreign Key is: {0}", db.Entry(ex2).Property("ContactDataId").CurrentValue);
-                //ContactData ncd = cdb.ContactData.Find(db.Entry(ex2).Property("ContactDataId").CurrentValue);
-                //ex2.ContactData = ncd;
-                //ex2.ContactData.Serialized = "{\"FirstName\": \"Jaan\", \"ContactLanguage\": { \"Id\":23,\"Code\": \"FI\",\"Name\": \"Svenska\"}}";
-                //ex2.ContactData.ContactLanguage = ll;
-                db.SaveChanges();
-
+                EmployeeRepository<EmployeeContext> er = new EmployeeRepository<EmployeeContext>(db);                               
                 
 
                 foreach(Employee ex in er.GetAll().Where( x => x.Id >= 12)) {
@@ -127,7 +110,7 @@ namespace ConsoleApplication
                                 //PreserveReferencesHandling = PreserveReferencesHandling.Objects 
                         });                    
                     Console.WriteLine("{0} {1} {2}\n{3}", ex.Id, ex.Name, ex.EmployeeId, json);
-                    er.Delete(ex);  // does not delete contactdata.
+                    //er.Delete(ex);  // does not delete contactdata.
                 }       
                 db.SaveChanges();
 

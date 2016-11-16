@@ -6,11 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ASTV.Services {
     public class EmployeeContext: DbContext {
-        public DbSet<Employee> Employees {get; set;}
-        //public DbSet<ContactData> ContactData {get; set;}
-        //public DbSet<Education> Education {get; set;}
-        //public DbSet<Language> Language {get; set;}
-        //public DbSet<EducationLevel> EducationLevel {get; set;}
+        public DbSet<Employee> Employees {get; set;}        
         public EmployeeContext(DbContextOptions<EmployeeContext> options)
             : base(options)
         {
@@ -23,7 +19,9 @@ namespace ASTV.Services {
         }
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            base.OnModelCreating(builder);                        
+            base.OnModelCreating(builder);
+            builder.Entity<Employee>().Ignore(p => p.sAMAccountName);
+            builder.Entity<Employee>().Ignore(p => p.SID);                        
         }
     }
 }

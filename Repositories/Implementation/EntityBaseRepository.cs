@@ -7,23 +7,20 @@ using System;
 
 namespace ASTV.Services {
     /// <summary>
-    /// Base repository
+    /// Base repository with modification capabilities
     ///
     /// Origin <see><a href="https://chsakell.com/2016/06/23/rest-apis-using-asp-net-core-and-entity-framework-core/">https://chsakell.com/2016/06/23/rest-apis-using-asp-net-core-and-entity-framework-core/</a></see>
     ///</summary>
     public class EntityBaseRepository<T, TContext> : 
-        IEntityBaseRepository<T, TContext> 
+        EntityBaseRepositoryReadOnly<T, TContext>, IEntityBaseRepository<T, TContext>
         where T: class, IEntityBase, new()  
         where TContext : DbContext
      {
-        protected TContext _context;
-        public EntityBaseRepository(TContext context) {
-            this._context = context;
+        
+        public EntityBaseRepository(TContext context) : base(context) {
+            //this._context = context;
         }
-        public virtual IEnumerable<T> GetAll()
-        {                        
-            return _context.Set<T>().ToList();             
-        }
+
         public virtual void Add(T entity)
         {
             EntityEntry dbEntityEntry = _context.Entry<T>(entity);            

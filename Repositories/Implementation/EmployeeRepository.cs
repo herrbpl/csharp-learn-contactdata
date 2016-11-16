@@ -4,7 +4,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 namespace ASTV.Services {
     
-    public class EmployeeRepository<TContext>: EntityBaseRepository<Employee, TContext>                
+    public class EmployeeRepository<TContext>: EntityBaseRepositoryReadOnly<Employee, TContext>                
         where TContext : EmployeeContext       
     {
         
@@ -13,14 +13,8 @@ namespace ASTV.Services {
         {
                           
         } 
-        public override IEnumerable<Employee> GetAll() {
-            //_context.Language.ToList();
-            //_context.EducationLevel.ToList();
-
-            return _context.Employees.
-                //Include(c => c.ContactData).
-                //ThenInclude(e => e.Education).                
-                ToList().AsEnumerable();
+        public override IEnumerable<Employee> GetAll() {            
+            return _context.Employees.AsNoTracking().ToList().AsEnumerable();                                                
         }
         
     }
