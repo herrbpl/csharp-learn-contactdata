@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 namespace ASTV.Models.Generic {
     public class Language: IEntityBase {
-        [JsonIgnore]
+        //[JsonIgnore]
         public int Id { get; set; }
         [MaxLength(3)]
         public string Code { get; set; }

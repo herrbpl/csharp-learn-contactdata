@@ -18,7 +18,7 @@ namespace ConsoleApplication
     {
         public Startup(IHostingEnvironment env)
         {
-            var builder = new ConfigurationBuilder()
+            var builder = new ConfigurationBuilder () 
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);
@@ -126,8 +126,8 @@ namespace ConsoleApplication
                 EmployeeRepository<EmployeeContext> er = new EmployeeRepository<EmployeeContext>(db);
                 
                 Employee ex2 = er.GetAll().Where( x => x.Id == 2).SingleOrDefault();
-                ex2.ContactData.Serialized = "{\"FirstName\": \"Jaan\"}";
-                ex2.ContactData.ContactLanguage = ll;
+                ex2.ContactData.Serialized = "{\"FirstName\": \"Jaan\", \"ContactLanguage\": { \"Id\":23,\"Code\": \"FI\",\"Name\": \"Svenska\"}}";
+                //ex2.ContactData.ContactLanguage = ll;
                 db.SaveChanges();
 
                 
@@ -148,6 +148,7 @@ namespace ConsoleApplication
                 }       
                 db.SaveChanges();
 
+                // how will it work when there is no connected data loaded.
                 Employee ex3 = db.Employees.Find(2);
                 if (ex3 != null)
                     Console.WriteLine("{0} {1} {2}\n{3}", ex3.Id, ex3.Name, ex3.EmployeeId, ex3.ContactData.Serialized);
