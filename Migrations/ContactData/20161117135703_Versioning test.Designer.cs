@@ -8,9 +8,10 @@ using ASTV.Services;
 namespace src.Migrations.ContactData
 {
     [DbContext(typeof(ContactDataContext))]
-    partial class ContactDataContextModelSnapshot : ModelSnapshot
+    [Migration("20161117135703_Versioning test")]
+    partial class Versioningtest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasAnnotation("ProductVersion", "1.0.0-rtm-21431")

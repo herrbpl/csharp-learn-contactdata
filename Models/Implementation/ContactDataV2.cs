@@ -7,12 +7,12 @@ using Newtonsoft.Json;
 
 
 namespace ASTV.Models.Employee {
-    public class ContactData: IEntityBase {
+    public class ContactData: IEntityBase, IEntityVersioning {
 
          public ContactData() {
            Education = new List<Education>();
          }
-         public int Id { get; set; }
+         //public int Id { get; set; }
 
          //public int EmployeeId { get; set; }
 

@@ -16,15 +16,17 @@ namespace ASTV.Services {
         where TContext : DbContext
     {
         IEnumerable<T> GetAll();
-        
+              
         /// <summary>
         /// Gets list from source, searched by where, including properties in navigationProperties        
-        /// <see>Origin - <a href="https://blog.magnusmontin.net/2013/05/30/generic-dal-using-entity-framework/comment-page-1/">https://blog.magnusmontin.net/2013/05/30/generic-dal-using-entity-framework/comment-page-1/</a></see> 
-        /// </summary>        
+        /// <see>Origin - <a href="https://blog.magnusmontin.net/2013/05/30/generic-dal-using-entity-framework/comment-page-1/">https://blog.magnusmontin.net/2013/05/30/generic-dal-using-entity-framework/comment-page-1/</a></see>                 
         /// <param name="where"> Lambda expression</param>
         /// <param name="Expression<Func<T"></param>
         /// <param name="navigationProperties"></param>
-        /// <returns>List of objects T</returns>         
+        /// <returns>List of objects T</returns> 
+        /// </summary>        
+        
+
         IEnumerable<T> GetList(Func<T, bool> where, params Expression<Func<T,object>>[] navigationProperties);
         int Count();
     }
