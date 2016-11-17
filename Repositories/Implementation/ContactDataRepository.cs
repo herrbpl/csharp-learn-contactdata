@@ -16,5 +16,10 @@ namespace ASTV.Services {
         // add - if exists, update, else add
         // update - if exist, create old version
         // delete - mark deleted
+
+        // Get all latest versions
+        public override IEnumerable<ContactData> GetAll() {
+            return null;
+        }
     }
 }    

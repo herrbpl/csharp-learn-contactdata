@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Linq.Expressions;
 using System;
 using System.Reflection;
@@ -43,12 +45,12 @@ namespace ASTV.Extenstions {
                             Expression.Property(parameter, property.Name),
                             Expression.Constant(keyValue)),
                         parameter) as Expression<Func<TEntity, bool>>;
-        
+                
                 query = query.Where(expression);
         
                 i++;
             }
-        
+            
             var entity = entries.Select(x => x.Entity).FirstOrDefault();
         
             if (entity != null)
@@ -68,6 +70,24 @@ namespace ASTV.Extenstions {
             dynamic set = SetMethod.MakeGenericMethod(entityType).Invoke(context, null);
             var entity = Find(set, keyValues);
             return entity;
+        }
+
+        /*
+        public static DbSet<TEntity> GetSet<TEntity>(this DbSet<TEntity> set) where TEntity : class
+        {            
+            var context =  set.GetService<IDbContextServices>().CurrentContext.Context; 
+            var entityType = context.Model.FindEntityType(typeof(TEntity));
+            var keys = entityType.GetKeys();
+            var entries = context.ChangeTracker.Entries<TEntity>();
+            var parameter = Expression.Parameter(typeof(TEntity), "x");
+            //IQueryable<TEntity> query = context.Set<TEntity>();
+            return context.Set<TEntity>();
+        }
+        */
+
+        public static object GetSet(this DbContext context, Type entityType) {
+            dynamic set = SetMethod.MakeGenericMethod(entityType).Invoke(context, null);
+            return set;
         }
     }
 }
