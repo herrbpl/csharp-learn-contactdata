@@ -41,7 +41,13 @@ namespace ASTV.Services {
             VersionInfo ll = qq.Latest(entity);
 
             foreach(var xx in _context.Set<T>().AsNoTracking().Where(
-                e => EF.Property<Boolean>(e, "IsCurrent") == true).Select( m => new VersionInfo { IsCurrent = EF.Property<Boolean>(m, "IsCurrent") } )) {
+                e => EF.Property<Boolean>(e, "IsCurrent") == true).Select( m => 
+                    new VersionInfo { 
+                            IsCurrent = EF.Property<Boolean>(m, "IsCurrent"), 
+                            ChangeId = EF.Property<int>(m, "ChangeId"),
+                            Version = EF.Property<int>(m, "Version")
+                            
+                            } )) {
                 Console.WriteLine(xx.ToString());
                 
                 Console.WriteLine("XX info: \n{0}", EntityVersioningExtensions.ListObject(xx));

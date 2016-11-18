@@ -16,6 +16,7 @@ using ASTV.Models.Generic;
 
 namespace ASTV.Extenstions {
     public class VersionInfo {
+        public int ChangeId { get; set; }
         public DateTime ValidFrom { get; set; }
         public DateTime ValidUntil { get; set; }
         public Boolean IsCurrent { get; set; }
@@ -53,7 +54,7 @@ namespace ASTV.Extenstions {
                         .Property<int>("Version");
 
                     modelBuilder.Entity(entityType.ClrType)
-                        .Property<int>("ChangeId");
+                        .Property<int>("ChangeId").ValueGeneratedOnAdd();
                     
                     // need to create alternate key
                     var akey = modelBuilder.Entity(entityType.ClrType).Metadata.FindPrimaryKey();
@@ -153,6 +154,12 @@ namespace ASTV.Extenstions {
                 var ak = set.VK();
                 if (ak == null) { return null; } // no version keys
                 string kv = "";
+                //Expression<Func<TEntity, bool>> expression = Expression.
+                
+                BinaryExpression exbody = null;
+
+                ParameterExpression parameter = Expression.Parameter(typeof(TEntity), "x");
+                // build expression
                 foreach(var property in ak.Properties) {
                     if (property.Name != "Version") {
                         // get value of entity of given name.
@@ -165,12 +172,38 @@ namespace ASTV.Extenstions {
                             kv += oo.ToString();
                         }
                         kv += " ";
+                        // value I'm comparing to, aka value of key
+                        var value = Expression.Constant(oo, oo.GetType() );
+                        var subExpression = Expression.Equal(
+                            BuildCallExpression<TEntity>(parameter, property.Name, oo.GetType())
+                            , value
+                        );
+                        if (exbody == null) {
+                            exbody = subExpression;
+                        } else {
+                            exbody = Expression.And(
+                                exbody, subExpression
+                            );
+                        }                        
                     }                    
                 }
-                kv = "Search Key: '"+kv+"'";
-                Console.WriteLine(kv);
+
+                var exp = Expression.Lambda(exbody, parameter) as Expression<Func<TEntity, bool>>;
+
+                var ttt = set.AsNoTracking().Where(exp).ToList();
+                var str = ttt.Serialize( new List<string>() { "aa" });
+                
+                Console.WriteLine("Search key: '{0}', Lambda: '{1}', '{2}'", kv,  exp.ToString(), str);
             }
             return null;
+        }
+
+        public static MethodCallExpression BuildCallExpression<TEntity>( ParameterExpression parameter, string propertyName, Type propertyType) {
+            return Expression.Call(
+                                PropertyMethod.MakeGenericMethod(propertyType)
+                                , parameter
+                                , Expression.Constant(propertyName, typeof(string))
+                            );
         }
 
         public static IQueryable<TEntity> IsCurrent<TEntity>(this IQueryable<TEntity> source,  TEntity entity) where TEntity : class
@@ -179,6 +212,7 @@ namespace ASTV.Extenstions {
                 var set = (DbSet<TEntity>)source;                                
                 Console.WriteLine("Well, well, Yes yes, it is!");
                 set.VK();
+                
                 var parameter = Expression.Parameter(typeof(TEntity), "x");
                 var expression = Expression.Lambda(
                     //Expression.And(  
