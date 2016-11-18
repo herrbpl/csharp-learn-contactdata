@@ -24,11 +24,7 @@ namespace ASTV.Extenstions {
         public int Version { get; set; }
 
     }
-    public static class EntityVersioningExtensions {
-
-        public static readonly Dictionary<string, Type> VersionProperties = new Dictionary<string, Type>(){
-            { "ValidFrom", typeof(System.DateTime)}
-        };         
+    public static class EntityVersioningExtensions {               
 
         public static void AddVersioningAttributes(this DbContext context, ModelBuilder modelBuilder) {
             // Versioning information. Need to create index on previous key and version number?
@@ -76,14 +72,7 @@ namespace ASTV.Extenstions {
                     } else {
                         modelBuilder.Entity(entityType.ClrType).HasKey("ChangeId");
                     }
-                     
-                    foreach(var key in modelBuilder.Entity(entityType.ClrType).Metadata.GetKeys()) {
-                        string s ="";
-                        foreach(var p in key.Properties ) {
-                            s += " "+p.Name;
-                        }
-                        Console.WriteLine("Key is {0}", s);                        
-                    }
+                                        
             }
         }
 
@@ -117,7 +106,7 @@ namespace ASTV.Extenstions {
 
 
 
-        public static IKey VK<TEntity>(this DbSet<TEntity> set) where TEntity : class
+        public static IKey GetVersionKeys<TEntity>(this DbSet<TEntity> set) where TEntity : class
         {
             var context =  set.GetService<IDbContextServices>().CurrentContext.Context; 
             var entityType = context.Model.FindEntityType(typeof(TEntity));
@@ -132,15 +121,44 @@ namespace ASTV.Extenstions {
             return null;
         }
 
-        public static void BuildVersionExpression<TEntity>(this DbSet<TEntity> set, TEntity entity) where TEntity : class
+
+
+        public static Expression<Func<TEntity, bool>> BuildVersionQueryPredicate<TEntity>(this DbSet<TEntity> set, TEntity entity) where TEntity : class
         {   
-            var vk = set.VK();
-            if (vk == null) return;            
-            // enumerate values of key properties            
-            // I need to get latest version no from db by AK and increase it by 1. 
-            // I also need to mark latest as not current, current as current and update dates
+            if (entity == null ) throw new ArgumentNullException();
+            var vk = set.GetVersionKeys();
+            if (vk == null) throw new ArgumentException("Version keys are not defined for set");
 
+            BinaryExpression exbody = null;
+            ParameterExpression parameter = Expression.Parameter(typeof(TEntity), "x");
 
+            foreach(var property in vk.Properties) {
+                if (property.Name != "Version") {
+                    // get value of entity of given name.
+                    var oo = entity.GetType().GetTypeInfo().
+                        GetProperties().Where(p => p.Name == property.Name).
+                        Select(p => p.GetValue(entity,null)).FirstOrDefault();
+
+                    // value I'm comparing to, aka value of key
+                    var value = Expression.Constant(oo, oo.GetType() );
+                    var subExpression = Expression.Equal(
+                        BuildCallExpression<TEntity>(parameter, property.Name, oo.GetType())
+                        , value
+                    );
+
+                    if (exbody == null) {
+                        exbody = subExpression;
+                    } else {
+                        exbody = Expression.And(
+                            exbody, subExpression
+                        );
+                    }                        
+                }                    
+            }
+
+            var exp = Expression.Lambda(exbody, parameter) as Expression<Func<TEntity, bool>>;
+
+            return exp;
         }
 
         /// <summary>
@@ -150,50 +168,12 @@ namespace ASTV.Extenstions {
         {            
             if (entity == null ) return null;
             if (typeof(DbSet<TEntity>).IsAssignableFrom(source.GetType())) {
-                var set = (DbSet<TEntity>)source;  
-                var ak = set.VK();
-                if (ak == null) { return null; } // no version keys
-                string kv = "";
-                //Expression<Func<TEntity, bool>> expression = Expression.
-                
-                BinaryExpression exbody = null;
-
-                ParameterExpression parameter = Expression.Parameter(typeof(TEntity), "x");
-                // build expression
-                foreach(var property in ak.Properties) {
-                    if (property.Name != "Version") {
-                        // get value of entity of given name.
-                        var oo = entity.GetType().GetTypeInfo().GetProperties().Where(p => p.Name == property.Name).Select(p => p.GetValue(entity,null)).FirstOrDefault();
-                        kv  += property.Name+ "=";
-                        //var oo = s.GetValue(O, null);
-                        if (oo == null) {
-                            kv += "(null)";
-                        } else {
-                            kv += oo.ToString();
-                        }
-                        kv += " ";
-                        // value I'm comparing to, aka value of key
-                        var value = Expression.Constant(oo, oo.GetType() );
-                        var subExpression = Expression.Equal(
-                            BuildCallExpression<TEntity>(parameter, property.Name, oo.GetType())
-                            , value
-                        );
-                        if (exbody == null) {
-                            exbody = subExpression;
-                        } else {
-                            exbody = Expression.And(
-                                exbody, subExpression
-                            );
-                        }                        
-                    }                    
-                }
-
-                var exp = Expression.Lambda(exbody, parameter) as Expression<Func<TEntity, bool>>;
-
+                var set = (DbSet<TEntity>)source;                
+                var exp = BuildVersionQueryPredicate<TEntity>(set, entity);
                 var ttt = set.AsNoTracking().Where(exp).ToList();
                 var str = ttt.Serialize( new List<string>() { "aa" });
                 
-                Console.WriteLine("Search key: '{0}', Lambda: '{1}', '{2}'", kv,  exp.ToString(), str);
+                Console.WriteLine("Search key: '{0}', Lambda: '{1}', '{2}'", "",  exp.ToString(), str);
             }
             return null;
         }
@@ -211,7 +191,7 @@ namespace ASTV.Extenstions {
             if (typeof(DbSet<TEntity>).IsAssignableFrom(source.GetType())) {
                 var set = (DbSet<TEntity>)source;                                
                 Console.WriteLine("Well, well, Yes yes, it is!");
-                set.VK();
+                set.GetVersionKeys();
                 
                 var parameter = Expression.Parameter(typeof(TEntity), "x");
                 var expression = Expression.Lambda(
@@ -307,56 +287,7 @@ namespace ASTV.Extenstions {
             }
             //set.AsNoTracking().Where(p => p.Equals())
         }
-
-
-
-        
-        public static void GetLatestVersion<TEntity>(this DbSet<TEntity> set, params object[] keyValues) where TEntity : class
-        {
-            // get latest information from database
-            MethodInfo PropertyMethodx
-            = typeof(EF).GetTypeInfo().GetDeclaredMethod(nameof(Property));
-            var context =  set.GetService<IDbContextServices>().CurrentContext.Context; 
-            var entityType = context.Model.FindEntityType(typeof(TEntity));
-            var keys = entityType.GetKeys();
-            var entries = context.ChangeTracker.Entries<TEntity>();
-            var parameter = Expression.Parameter(typeof(TEntity), "x");
-            //EF.Property<Boolean>(parameter, "IsCurrent");
-        
-            /*
-            Expression.Call(
-                            EF.PropertyMethod.MakeGenericMethod(property.ClrType),
-                            entityParameter,
-                            Expression.Constant(property.Name, typeof(string))
-            */
-            // should extract keys from key which has "Version" defined and get its latest value
-             var expression = Expression.Lambda(
-                    //Expression.And(  
-                        Expression.Equal(
-                            Expression.Call(
-                                PropertyMethod.MakeGenericMethod(typeof(Boolean) )
-                                , parameter
-                                , Expression.Constant("IsCurrent", typeof(string))
-                            )
-                            ,
-                            Expression.Constant(true)),
-                            /*,
-                        Expression.Equal(
-                            Expression.Property(parameter, "Version"),
-                            Expression.Constant(1))
-                            ),*/
-                        parameter) as Expression<Func<TEntity, bool>>;
-            Console.WriteLine("Linq Expression: {0}",  expression.ToString());
-            var cdd = expression.Compile();
-            //set.AsNoTracking().Where(expression).Max();
-//            IList<TEntity> x =set.Where(cdd).ToList();
-//             Console.WriteLine("CNN is : {0}", x.Count);
-            foreach(var nn  in set.Where(expression).ToList()) {
-                Console.WriteLine("NN is : {0}", nn.ToString());
-                
-            }
-            //set.AsNoTracking().Where(p => p.Equals())
-        }
+       
 
     }
 }

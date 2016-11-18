@@ -53,7 +53,7 @@ namespace ASTV.Services {
                 Console.WriteLine("XX info: \n{0}", EntityVersioningExtensions.ListObject(xx));
             }
             _context.Set<T>().PK("");
-            var k = _context.Set<T>().VK();
+            var k = _context.Set<T>().GetVersionKeys();
             if (k != null) {
                 Console.WriteLine("Versioning key found: ");
             }
