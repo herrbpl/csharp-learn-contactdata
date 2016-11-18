@@ -1,5 +1,6 @@
 using ASTV.Models.Employee;
 using ASTV.Models.Generic;
+using ASTV.Extenstions;
 using Microsoft.EntityFrameworkCore;
 using System;
 namespace ASTV.Services {
@@ -35,5 +36,12 @@ namespace ASTV.Services {
             base.OnModelCreating(builder);
 
         }
+        public override int SaveChanges()
+        {
+            this.ContactData.AddVersion("ss");
+            //this.RecordsVersioning();
+ 
+            return base.SaveChanges();
+        }    
     }
 }    

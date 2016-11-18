@@ -34,6 +34,7 @@ namespace ASTV.Services {
         {
             Console.WriteLine("Entering Base OnModelCreating");
             // Add audit information.
+            /*
             foreach (var entityType in modelBuilder.Model.GetEntityTypes()
                 .Where(e => typeof(IEntityAuditable).IsAssignableFrom(e.ClrType)))
             {
@@ -49,61 +50,9 @@ namespace ASTV.Services {
                     modelBuilder.Entity(entityType.ClrType)
                         .Property<string>("UpdatedBy");
             }
-
-            // Versioning information. Need to create index on previous key and version number?
-            foreach (var entityType in modelBuilder.Model.GetEntityTypes()
-                .Where(e => typeof(IEntityVersioning).IsAssignableFrom(e.ClrType)))
-            {
-                    modelBuilder.Entity(entityType.ClrType)
-                        .Property<DateTime>("ValidFrom");
- 
-                    modelBuilder.Entity(entityType.ClrType)
-                        .Property<DateTime>("ValidUntil");
- 
-                    modelBuilder.Entity(entityType.ClrType)
-                        .Property<Boolean>("IsCurrent");
- 
-                    modelBuilder.Entity(entityType.ClrType)
-                        .Property<Boolean>("IsDeleted");
-
-                    modelBuilder.Entity(entityType.ClrType)
-                        .Property<int>("Version");
-
-                    modelBuilder.Entity(entityType.ClrType)
-                        .Property<int>("ChangeId");
-                    
-                    // need to create alternate key
-                    var akey = modelBuilder.Entity(entityType.ClrType).Metadata.FindPrimaryKey();
-                    if (akey != null) {
-                        
-                        // remove old primary key
-
-                        var oldkey = modelBuilder.Entity(entityType.ClrType).Metadata.RemoveKey(akey.Properties);
-                        
-                        
-                        IList<string> pnames = new List<string>();
-                        
-                        foreach(var p in oldkey.Properties ) {
-                            pnames.Add(p.Name);
-                        }
-
-                        pnames.Add("Version");
-                        modelBuilder.Entity(entityType.ClrType).HasKey("ChangeId");
-                        modelBuilder.Entity(entityType.ClrType).HasAlternateKey(pnames.ToArray()); 
-                        
-                    } else {
-                        modelBuilder.Entity(entityType.ClrType).HasKey("ChangeId");
-                    }
-                     
-                    foreach(var key in modelBuilder.Entity(entityType.ClrType).Metadata.GetKeys()) {
-                        string s ="";
-                        foreach(var p in key.Properties ) {
-                            s += " "+p.Name;
-                        }
-                        Console.WriteLine("Key is {0}", s);
-                        
-                    }
-            }
+            */
+            
+            this.AddVersioningAttributes(modelBuilder);
             Console.WriteLine("Chaining model creating");
             base.OnModelCreating(modelBuilder);
         }
