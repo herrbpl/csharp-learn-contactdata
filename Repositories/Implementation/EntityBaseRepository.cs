@@ -23,22 +23,18 @@ namespace ASTV.Services {
             //this._context = context;
         }
 
-
-        private IQueryable<T> ApplyVersionFilter(IQueryable<T> source ) {
-            return source.Where(e => EF.Property<Boolean>(e, "IsCurrent") == true);
-        } 
-
         public virtual void Add(T entity)
         {
 
+            /*
             Console.WriteLine("==========================================================\n");
             Console.WriteLine("Entity to be saved: \n{0}", EntityVersioningExtensions.ListObject(entity));
             Console.WriteLine("==========================================================\n");
-            //VersionInfo x = new VersionInfo();
+            
             IQueryable<T> qq = _context.Set<T>();
             Console.WriteLine("CCOUNT IS:{0}", qq.IsCurrent(entity).Count());
 
-            VersionInfo ll = qq.Latest(entity);
+           // VersionInfo ll = qq.Latest(entity);
 
             foreach(var xx in _context.Set<T>().AsNoTracking().Where(
                 e => EF.Property<Boolean>(e, "IsCurrent") == true).Select( m => 
@@ -58,10 +54,13 @@ namespace ASTV.Services {
                 Console.WriteLine("Versioning key found: ");
             }
 
+            */
+            EntityEntry dbEntityEntry = _context.Entry<T>(entity);     
+            dbEntityEntry.Property("Version").CurrentValue = (int)dbEntityEntry.Property("Version").CurrentValue+1;
+            _context.Set<T>().Add(entity);        
+            _context.SaveChanges();           
 
-            EntityEntry dbEntityEntry = _context.Entry<T>(entity);            
-            _context.Set<T>().Add(entity);                   
-                        
+            /*            
             Console.WriteLine("Entity added");
             IList<T> o = _context.Set<T>().ToList();
             int i = 0;
@@ -69,6 +68,7 @@ namespace ASTV.Services {
                 i++;
                 Console.WriteLine("Line: {0}:{1}", i, x.ToString());
             }
+            */
         }
         public virtual void Update(T entity) {
             EntityEntry dbEntityEntry = _context.Entry<T>(entity);

@@ -36,12 +36,6 @@ namespace ASTV.Services {
             base.OnModelCreating(builder);
 
         }
-        public override int SaveChanges()
-        {
-            this.ContactData.AddVersion("ss");
-            //this.RecordsVersioning();
- 
-            return base.SaveChanges();
-        }    
+            
     }
 }    
