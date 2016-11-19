@@ -200,6 +200,10 @@ namespace ASTV.Extenstions {
                             );
         }
 
+
+        
+
+
         public static IQueryable<TEntity> IsCurrent<TEntity>(this IQueryable<TEntity> source,  TEntity entity) where TEntity : class
         {
             if (typeof(DbSet<TEntity>).IsAssignableFrom(source.GetType())) {
@@ -227,7 +231,33 @@ namespace ASTV.Extenstions {
             }        
             return source;
         }
-               
+
+        public static void printChangeTracker<TEntity>(this DbContext context, string tracing) where TEntity : class {
+            Console.WriteLine("[{0}] ChangeTracker has {1} entries", tracing, context.ChangeTracker.Entries<TEntity>().Count());
+            foreach(var xx in context.ChangeTracker.Entries<TEntity>()) {
+                //xx.Metadata.
+                
+                int version = xx.Property<int>("Version").CurrentValue;
+                string s = xx.Property<string>("EmployeeId").CurrentValue;
+                DateTime d = xx.Property<DateTime>("ValidFrom").CurrentValue;
+
+                Console.WriteLine("{0} {1} {2} {3}", xx.Property<int>("ChangeId").CurrentValue, s, version,
+                    d);                
+            }
+        }         
+         public static void printSet<TEntity>(this DbContext context, string tracing) where TEntity : class {
+            Console.WriteLine("[{0}] Set<> has {1} entries", tracing, context.Set<TEntity>().Count());             
+            foreach(var xxy in context.Set<TEntity>()) {
+                //xx.Metadata.
+                 var xx = context.Entry(xxy);
+                int version = xx.Property<int>("Version").CurrentValue;
+                string s = xx.Property<string>("EmployeeId").CurrentValue;
+                DateTime d = xx.Property<DateTime>("ValidFrom").CurrentValue;
+
+                Console.WriteLine("{0} {1} {2} {3}", xx.Property<int>("ChangeId").CurrentValue, s, version,
+                    d);
+            }
+        }              
 
     }
 }

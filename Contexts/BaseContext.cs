@@ -39,31 +39,33 @@ namespace ASTV.Services {
 
 
         public virtual VersionInfo GetVersionInfo<TEntity>(TEntity entity)  where TEntity : class {
-            var vi = this.Set<TEntity>().Versions(entity).Select( m => 
+            VersionInfo vi;            
+            var vil = this.Set<TEntity>().Versions(entity).Select( m => 
                     new VersionInfo { 
                             IsCurrent = EF.Property<Boolean>(m, "IsCurrent"), 
                             ChangeId = EF.Property<int>(m, "ChangeId"),
                             Version = EF.Property<int>(m, "Version")
                             
-                            } ).FirstOrDefault();
-            Expression<Func<TEntity, bool>> p = this.Set<TEntity>().BuildVersionQueryPredicate<TEntity>(entity);
-            var v2 = this.Set<TEntity>().Versions(entity).Select( m => 
-                    new VersionInfo { 
-                            IsCurrent = EF.Property<Boolean>(m, "IsCurrent"), 
-                            ChangeId = EF.Property<int>(m, "ChangeId"),
-                            Version = EF.Property<int>(m, "Version")
-                            
-                            } ).FirstOrDefault();                            
-            if (vi == null) {
+                            } ).ToList();
+                                 
+            if (vil.Count == 0) {
                 vi = new VersionInfo();
-            }  
+            }  else {
+                vi = vil.Aggregate(
+                                (v1, v2) => v1.Version > v2.Version ? v1 : v2
+                            );
+            }
             return vi;
         }
 
+        
+
+        
         public override EntityEntry<TEntity> Add<TEntity>(TEntity entity)
         {
-
-            
+           // this.printChangeTracker<TEntity>();
+           //  this.printSet<TEntity>();
+           
             // get version info.
             VersionInfo x = GetVersionInfo<TEntity>(entity);
             // update proprty information. Why is this not working?
@@ -72,18 +74,13 @@ namespace ASTV.Services {
             Console.WriteLine("Version info before: \n{0}\n",  x.Serialize( new List<string>() { "aa" }));
             
             Console.WriteLine("x.Version {0} {1}", x.Version, x.Version+1);
-            
-            
-            
+
             
             Entry(entity).Property<int>("ChangeId").CurrentValue = x.ChangeId+1;
             Entry(entity).Property<int>("Version").CurrentValue = x.Version+1;
             Entry(entity).Property<DateTime>("ValidFrom").CurrentValue = DateTime.Now;
-            var entry = base.Add(entity);   
-            
-
-                    
-
+            var entry = base.Add(entity);                                   
+            Console.WriteLine("-----------------------------------------------------");
             return entry;
         }
 
