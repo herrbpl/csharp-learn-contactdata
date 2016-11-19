@@ -146,7 +146,17 @@ namespace ASTV.Extenstions {
             return x;
          }
 
-        public static TEntity Latest<TEntity>(this DbSet<TEntity> set, TEntity entity) where TEntity : class {
+        public static TEntity Latest<TEntity>(this IQueryable<TEntity> source, TEntity entity) where TEntity : class {
+            if (typeof(DbSet<TEntity>).IsAssignableFrom(source.GetType())) {
+                var set = (DbSet<TEntity>)source;    
+                int mv = set.MaxVersion(entity);
+                if (mv == 0 ) return null;
+                return set.GetVersion(entity, mv);
+            }
+            return null;
+        }
+
+        public static TEntity LatestSQL<TEntity>(this DbSet<TEntity> set, TEntity entity) where TEntity : class {
 
             if (entity == null ) throw new ArgumentNullException();
             var vk = set.GetVersionKeys();
@@ -295,9 +305,11 @@ namespace ASTV.Extenstions {
                 int version = xx.Property<int>("Version").CurrentValue;
                 string s = xx.Property<string>("EmployeeId").CurrentValue;
                 DateTime d = xx.Property<DateTime>("ValidFrom").CurrentValue;
+                DateTime d2 = xx.Property<DateTime>("ValidUntil").CurrentValue;
 
-                Console.WriteLine("{0} {1} {2} {3}", xx.Property<int>("ChangeId").CurrentValue, s, version,
-                    d);                
+                Console.WriteLine("{0} {1} {2} {3} {4}", xx.Property<int>("ChangeId").CurrentValue, s, version,
+                    d, d2);
+                                
             }
         }         
          public static void printSet<TEntity>(this DbContext context, string tracing) where TEntity : class {
@@ -308,9 +320,10 @@ namespace ASTV.Extenstions {
                 int version = xx.Property<int>("Version").CurrentValue;
                 string s = xx.Property<string>("EmployeeId").CurrentValue;
                 DateTime d = xx.Property<DateTime>("ValidFrom").CurrentValue;
+                DateTime d2 = xx.Property<DateTime>("ValidUntil").CurrentValue;
 
-                Console.WriteLine("{0} {1} {2} {3}", xx.Property<int>("ChangeId").CurrentValue, s, version,
-                    d);
+                Console.WriteLine("{0} {1} {2} {3} {4}", xx.Property<int>("ChangeId").CurrentValue, s, version,
+                    d, d2);
             }
         }              
 

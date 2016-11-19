@@ -65,7 +65,7 @@ namespace ASTV.Services {
             _context.Set<T>().Add(entity);
             _context.printChangeTracker<T>("AfterAdd");
             _context.printSet<T>("AfterAdd");        
-            _context.SaveChanges();          
+           // _context.SaveChanges();          
             _context.printChangeTracker<T>("AfterSave");
             _context.printSet<T>("AfterSave");
             Console.WriteLine("======================================================="); 
