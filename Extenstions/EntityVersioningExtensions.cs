@@ -12,6 +12,10 @@ using System;
 using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
+using System.Data.Common;
+using System.Data.SqlTypes;
+using System.Data.SqlClient;
+
 using ASTV.Models.Generic;
 
 namespace ASTV.Extenstions {
@@ -29,7 +33,10 @@ namespace ASTV.Extenstions {
         public static void AddVersioningAttributes(this DbContext context, ModelBuilder modelBuilder) {
             // Versioning information. Need to create index on previous key and version number?
             // TODO: save original key to context cache?
-             
+            
+            //modelBuilder.ForSqlServerHasSequence<int>("DBSequence")
+            //                  .StartsAt(1000).IncrementsBy(2);
+
             foreach (var entityType in modelBuilder.Model.GetEntityTypes()
                 .Where(e => typeof(IEntityVersioning).IsAssignableFrom(e.ClrType)))
             {
@@ -110,7 +117,7 @@ namespace ASTV.Extenstions {
         {
             var context =  set.GetService<IDbContextServices>().CurrentContext.Context; 
             var entityType = context.Model.FindEntityType(typeof(TEntity));
-            var pk = entityType.FindPrimaryKey();
+            //var pk = entityType.FindPrimaryKey();
             var keys = entityType.GetKeys();
             foreach(var key in keys) {
                 if (key.Properties.Where(m => m.Name == "Version").Count() > 0) {
@@ -121,7 +128,76 @@ namespace ASTV.Extenstions {
             return null;
         }
 
+        public static int MaxVersion<TEntity>(this DbSet<TEntity> set, TEntity entity) where TEntity : class {
+            try {
+                return set.Versions(entity).Select( 
+                            m => EF.Property<int>(m, "Version") ).Max();
+            } catch (Exception e) {
+                return 0;
+            }
 
+        }
+
+         public static TEntity GetVersion<TEntity>(this DbSet<TEntity> set, TEntity entity, int version) where TEntity : class {
+
+            if (entity == null ) throw new ArgumentNullException();               
+            var x = set.Versions(entity).
+                Where( m => EF.Property<int>(m, "Version") == version).FirstOrDefault();                              
+            return x;
+         }
+
+        public static TEntity Latest<TEntity>(this DbSet<TEntity> set, TEntity entity) where TEntity : class {
+
+            if (entity == null ) throw new ArgumentNullException();
+            var vk = set.GetVersionKeys();
+            if (vk == null) throw new ArgumentException("Version keys are not defined for set");
+
+            var context =  set.GetService<IDbContextServices>().CurrentContext.Context; 
+            var entityType = context.Model.FindEntityType(typeof(TEntity));
+            string schema = (entityType.Relational().Schema == ""? entityType.Relational().Schema+"." : "");
+            //entityType.Relational().Schema
+            string sql = @"SELECT * FROM {0}{1} as T WHERE Version = (SELECT MAX(Version) FROM {0}{1} WHERE #KEY#) AND #KEY#)";
+
+            string ak = "";
+            object[] sqlParams = {};
+
+            foreach(var property in vk.Properties) {
+                if (property.Name != "Version") {
+                    // get value of entity of given name.
+                    var oo = entity.GetType().GetTypeInfo().
+                        GetProperties().Where(p => p.Name == property.Name).
+                        Select(p => p.GetValue(entity,null)).FirstOrDefault();
+                    
+                    // value I'm comparing to, aka value of key
+                    var value = Expression.Constant(oo, oo.GetType() );
+                    
+                    ak += sqlParams.Count()>0 ? " AND ":"";
+                    ak += " \""+ property.Relational().
+                        ColumnName.Replace("\"", "#quot;#quot").Replace("#quot;", "\"") +"\" = @p"+sqlParams.Count().ToString();
+                    
+
+                    sqlParams.Append( 
+                        new SqlParameter {
+                            ParameterName = "p"+sqlParams.Count().ToString() 
+                            , Value = value
+                        }
+
+                    );
+
+                }
+            }
+            sql = sql.Replace("#KEY#", "(1=1)");
+            //sql = sql.Replace("#KEY#", ak);
+            sql = String.Format(sql, schema, entityType.Relational().TableName);
+            
+            
+            Console.WriteLine(sql);
+            //var x = set.FromSql<TEntity>(sql, sqlParams).SingleOrDefault();
+            var x = set.FromSql<TEntity>(sql).SingleOrDefault();
+            
+
+            return x;
+        }
 
         public static Expression<Func<TEntity, bool>> BuildVersionQueryPredicate<TEntity>(this DbSet<TEntity> set, TEntity entity) where TEntity : class
         {   
@@ -175,23 +251,7 @@ namespace ASTV.Extenstions {
         }
 
 
-        /// <summary>
-        /// Returns latest versioninfo for entity 
-        /// </summary>
-        public static VersionInfo Latest<TEntity>(this IQueryable<TEntity> source,  TEntity entity) where TEntity : class
-        {            
-            if (entity == null ) return null;
-            if (typeof(DbSet<TEntity>).IsAssignableFrom(source.GetType())) {
-                var set = (DbSet<TEntity>)source;                
-                var exp = BuildVersionQueryPredicate<TEntity>(set, entity);
-                var ttt = set.AsNoTracking().Where(exp).ToList();
-                var str = ttt.Serialize( new List<string>() { "aa" });
-                
-                Console.WriteLine("Search key: '{0}', Lambda: '{1}', '{2}'", "",  exp.ToString(), str);
-            }
-            return null;
-        }
-
+       
         public static MethodCallExpression BuildCallExpression<TEntity>( ParameterExpression parameter, string propertyName, Type propertyType) {
             return Expression.Call(
                                 PropertyMethod.MakeGenericMethod(propertyType)
@@ -220,12 +280,7 @@ namespace ASTV.Extenstions {
                                 , Expression.Constant("IsCurrent", typeof(string))
                             )
                             ,
-                            Expression.Constant(true)),
-                            /*,
-                        Expression.Equal(
-                            Expression.Property(parameter, "Version"),
-                            Expression.Constant(1))
-                            ),*/
+                            Expression.Constant(true)),                            
                         parameter) as Expression<Func<TEntity, bool>>;
                 return source.Where(expression);
             }        

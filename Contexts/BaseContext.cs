@@ -66,17 +66,29 @@ namespace ASTV.Services {
            // this.printChangeTracker<TEntity>();
            //  this.printSet<TEntity>();
            
-            // get version info.
-            VersionInfo x = GetVersionInfo<TEntity>(entity);
-            // update proprty information. Why is this not working?
+            // get version info. Actually, saving back should occur as quickly as possible.
+            // otherwise some other process might grab version no.
+            // ideally this should be executed as transaction
 
+            VersionInfo x = GetVersionInfo<TEntity>(entity);
+            int mv = Set<TEntity>().MaxVersion(entity);
+             Console.WriteLine("Previous version: {0} ", mv);
+            TEntity previous;
+            if (x.Version > 0) {
+                previous = Set<TEntity>().GetVersion(entity, x.Version);
+                if (previous != null) {
+                    Console.WriteLine("Previous version: {0}", previous.Serialize(null));
+                }
+            } 
+            
+            // need to retrieve previous latest entry 
             
             Console.WriteLine("Version info before: \n{0}\n",  x.Serialize( new List<string>() { "aa" }));
             
             Console.WriteLine("x.Version {0} {1}", x.Version, x.Version+1);
 
             
-            Entry(entity).Property<int>("ChangeId").CurrentValue = x.ChangeId+1;
+            //Entry(entity).Property<int>("ChangeId").CurrentValue = x.ChangeId+1;
             Entry(entity).Property<int>("Version").CurrentValue = x.Version+1;
             Entry(entity).Property<DateTime>("ValidFrom").CurrentValue = DateTime.Now;
             var entry = base.Add(entity);                                   
