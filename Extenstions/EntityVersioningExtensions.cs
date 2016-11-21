@@ -291,6 +291,7 @@ namespace ASTV.Extenstions {
             xp[1] = parameter2;
             //var lambda = Expression.Lambda(predicate, xp) as Expression<Func<EntityEntry<TEntity>,TEntity, bool>>;
             var lambda = Expression.Lambda(predicate, parameter) as Expression<Func<EntityEntry<TEntity>, bool>>;
+            Console.WriteLine("Lambda {0}", lambda);
             IQueryable<EntityEntry<TEntity>> ccc = context.ChangeTracker.Entries<TEntity>().AsQueryable();
             
             ccc.Where(lambda).ToList();
@@ -342,13 +343,15 @@ namespace ASTV.Extenstions {
             )
         {
             var keyValuesConstant = Expression.Constant(keyValues);
-            Console.WriteLine("Type of parameter expression is \n{0}", ListObject(entityParameter));
+            //Console.WriteLine("Type of parameter expression is \n{0}", ListObject(entityParameter));
             var xxx = entityParameter.Type.GenericTypeArguments.ToList().Select(x => x.FullName).Join(", ");
             var y = Expression.Parameter( entityParameter.Type.GenericTypeArguments[0], "y");
             
             Console.WriteLine(entityParameter.Type.GenericTypeArguments[0].GetMethods().Select(m => m.Name).ToList().Join("\n"));
             Console.WriteLine("BLAAAH");
 
+            
+            Type tt = typeof(PropertyEntry<,>);
 
             //Console.WriteLine(entityParameter.Type.GetMethods().Select(m => m.Name).ToList().Join("\n"));
             MethodInfo xxz = null;
@@ -366,27 +369,49 @@ namespace ASTV.Extenstions {
                 xxz = mm;
                 //Console.WriteLine("Type of method is \n{0}", ListObject(mm));    
             }
+
+            
             //ParameterExpression y = Expression.Parameter(entityParameter.)
             //MethodInfo mi = entityParameter.Type.GetMethods("Property").;
             //Console.WriteLine("Type of method is \n{0}", ListObject(mi));
             BinaryExpression predicate = null;
             for (var i = 0; i < keyProperties.Count; i++)
             {
-                var property = keyProperties[i];
+                var property = keyProperties[i];                
+                
+                var ttt = tt.MakeGenericType(
+                    new Type[] {
+                        entityParameter.Type.GenericTypeArguments[0]
+                        , property.ClrType
+                    }
+                );
+
+                Console.WriteLine(ttt.GetMethods().Select(m => m.Name).ToList().Join("\n"));
+                var mmm = ttt.GetMethod("get_CurrentValue")
+                /*.MakeGenericMethod(  new Type[] {
+                                entityParameter.Type.GenericTypeArguments[0]
+                                , property.ClrType
+                            })
+                
+                */;
+                
                 var equalsExpression =
                     Expression.Equal(
-                        Expression.Call(
+                        Expression.Call(       
+
                         Expression.Call(
                             //entityParameter.Type.GenericTypeArguments[0].GetMethod("Property"),
                             //entityParameter.//.MakeGenericMethod(property.ClrType),
                             entityParameter,
                             xxz.MakeGenericMethod(property.ClrType),
                             //PropertyMethod2.MakeGenericMethod(property.ClrType),
-                            Expression.Constant(property.Name, typeof(string)))
-
-                            ,  
-                            ,
+                            Expression.Constant(property.Name, typeof(string))
+                            )
+                        //, //tt //entityParameter.Type                                                                         
+                        , mmm
+                        //, "CurrentValue"
                         )
+                        
                             
                             ,
                         Expression.Convert(
