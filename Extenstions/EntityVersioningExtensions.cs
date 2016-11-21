@@ -414,13 +414,15 @@ namespace ASTV.Extenstions {
                         
                             
                             ,
-                        Expression.Convert(
+                            
+                        //Expression.Convert(
                            // Expression.Constant(keyValues[i], typeof(object)),
                              Expression.Call(
                                 keyValuesConstant,
                                 GetValueMethod,
-                                Expression.Constant(i)), 
-                            property.ClrType)
+                                Expression.Constant(i))
+                          //      , 
+                          //  property.ClrType)
                             );
             if (predicate == null)  {
                 predicate = equalsExpression;
