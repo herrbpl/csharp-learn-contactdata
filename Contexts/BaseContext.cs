@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.EntityFrameworkCore.Storage;
 using ASTV.Models.Generic;
 using ASTV.Extenstions;
 
@@ -72,10 +73,25 @@ namespace ASTV.Services {
             // should always get data from changetracker
             // if latest is equal to provided value, then do not add a copy but return latest.
 
+
+            /*
+            ChangeTracker.Entries<TEntity>().Where(
+                p => p.Property("")
+            )
+            */
+            
+            this.GetChangeTrackerPredicate(entity);
+            var vkv = this.GetVersionKeyValues(entity);
+            for (var i = 0; i < vkv.Count; i++) {
+                Console.WriteLine("VKV value: {0}", vkv[i]);
+            }
+            
+        
             VersionInfo x = GetVersionInfo<TEntity>(entity);
-
+            var entityType = Model.FindEntityType(typeof(TEntity));
+            
             var previous = Set<TEntity>().Latest(entity);
-
+            // If entity with same key is given and is 
             int version = 0;
             
             if (previous != null) {
@@ -84,7 +100,7 @@ namespace ASTV.Services {
                 Entry(previous).Property<DateTime>("ValidUntil").CurrentValue = DateTime.Now;
                 Entry(previous).Property<Boolean>("IsCurrent").CurrentValue = false;
                 Entry(previous).State = EntityState.Modified;
-            }
+            } 
              
             version++;
             // need to retrieve previous latest entry 
@@ -97,7 +113,12 @@ namespace ASTV.Services {
             Entry(entity).Property<DateTime>("ValidFrom").CurrentValue = DateTime.Now;
             Entry(entity).Property<DateTime>("ValidUntil").CurrentValue = DateTime.MaxValue;
             Entry(entity).Property<Boolean>("IsCurrent").CurrentValue = true;
-            var entry = base.Add(entity);                                   
+            
+            var entry = base.Add(entity);
+            
+            // Temporary fix, actually should get max version from change tracker.
+            // To get that, need to build predicate for that. Its PITA     
+            this.SaveChanges();                              
             Console.WriteLine("-----------------------------------------------------");
             return entry;
         }
