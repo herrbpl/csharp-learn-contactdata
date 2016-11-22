@@ -317,7 +317,9 @@ namespace ASTV.Extenstions {
 
         
 
-        public  static Func<EntityEntry<TEntity>, MethodInfo> GetFunc<TEntity>() where TEntity : class {
+        public  static Func<EntityEntry<TEntity>, 
+            PropertyEntry<TEntity, string>
+        > GetFunc<TEntity>() where TEntity : class {
             var sourceParameter = Expression.Parameter(typeof(EntityEntry<TEntity>), "source");
             // get     // EntityEntry<TEntity> x.Property<propertytype>("propertyname").CurrentValue
             
@@ -330,7 +332,7 @@ namespace ASTV.Extenstions {
             );
             -*/
             
-            var lambda = Expression.Lambda<Func<EntityEntry<TEntity>, MethodInfo>>(
+            var lambda = Expression.Lambda<Func<EntityEntry<TEntity>,  PropertyEntry<TEntity, string>>>(
                 Expression.Call(
                     sourceParameter
                     , typeof(EntityEntry<TEntity>).GetMethod("Property", str).MakeGenericMethod(typeof(string))
