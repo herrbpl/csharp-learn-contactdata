@@ -105,23 +105,31 @@ namespace ASTV.Extenstions {
         
         public static string ListObject(object O) {
             string info = "";
+
             Type t = O.GetType();
             info += "Type: "+t.FullName;
             info += "Members:\n";
+            if (O is string) {
+                info += "Value: '"+(string)O+"'\n";
+            } else {
             foreach( var s in t.GetProperties()) {
                 info += s.Name + ":"; //+s.GetType().FullName;
                 if (s.GetType().FullName == "System.Reflection.RuntimePropertyInfo") {
                     
-                    info += ":"+s.PropertyType.FullName;
-                    var oo = s.GetValue(O, null);
-                    if (oo == null) {
-                        info += "= (null)";
-                    } else {
-                        info += "= "+oo.ToString();
+                    try {
+                        info += ":"+s.PropertyType.FullName;
+                        var oo = s.GetValue(O, null);
+                        if (oo == null) {
+                            info += "= (null)";
+                        } else {
+                            info += "= "+oo.ToString();
+                        }
+                    } catch (Exception e) {
+                        info += "Exception: "+e.Message;
                     }
-                    
                 }
                 info += "\n";
+            }
             }
 
             return info;
@@ -237,6 +245,11 @@ namespace ASTV.Extenstions {
 
             Console.WriteLine("MI2 \n{0}\n/MI2", mi2 != null? ListObject(mi2): "(null)");
 
+            var Ni1 = GetFunc2<TEntity>();
+
+            var Ni2 = Ni1(entry);
+
+            Console.WriteLine("NI2 \n{0}\n/NI2", Ni2 != null? ListObject(Ni2): "(null)");
 
             var tt = typeof(EntityEntry<TEntity>);
             
@@ -301,7 +314,7 @@ namespace ASTV.Extenstions {
                     Select(p => p.GetValue(entity,null)).FirstOrDefault();
                 var value = Expression.Constant(oo, oo.GetType() );
 
-                keyValues[i] = value;
+                keyValues[i] = oo;
                 if (keyValues[i] == null)
                 {
                     throw new ArgumentNullException("One of composite key values is null!");
@@ -318,19 +331,44 @@ namespace ASTV.Extenstions {
         
 
         public  static Func<EntityEntry<TEntity>, 
+            //PropertyEntry<TEntity, string>
+            string
+        > GetFunc2<TEntity>() where TEntity : class {
+            var sourceParameter = Expression.Parameter(typeof(EntityEntry<TEntity>), "source");
+            // get     // EntityEntry<TEntity> x.Property<propertytype>("propertyname").CurrentValue
+            
+            var str = new Type[] { typeof(string) };
+            
+            var returnTarget = Expression.Label(typeof(string));
+
+            var lambda = Expression.Lambda<Func<EntityEntry<TEntity>,  string>>(
+                
+                
+                Expression.Property(
+
+                Expression.Call(
+                    sourceParameter
+                    , typeof(EntityEntry<TEntity>).GetMethod("Property", str).MakeGenericMethod(typeof(string))
+                    , Expression.Constant("EmployeeId", typeof(string))
+                )
+                    ,  typeof(PropertyEntry<TEntity, string>).GetProperty("CurrentValue", typeof(string))
+
+                )                
+                , sourceParameter
+                            
+            );
+            Console.WriteLine("Lambda \n{0}\n/dLambda", lambda.ToString());
+            return lambda.Compile();                        
+        }
+
+
+        public  static Func<EntityEntry<TEntity>, 
             PropertyEntry<TEntity, string>
         > GetFunc<TEntity>() where TEntity : class {
             var sourceParameter = Expression.Parameter(typeof(EntityEntry<TEntity>), "source");
             // get     // EntityEntry<TEntity> x.Property<propertytype>("propertyname").CurrentValue
             
             var str = new Type[] { typeof(string) };
-
-            /*
-            var sourcePropertyRetriever = Expression.Property(
-                sourceParameter
-                , typeof(EntityEntry<TEntity>).GetMethod("Property", str).MakeGenericMethod(typeof(TEntity))
-            );
-            -*/
             
             var lambda = Expression.Lambda<Func<EntityEntry<TEntity>,  PropertyEntry<TEntity, string>>>(
                 Expression.Call(
@@ -413,7 +451,7 @@ namespace ASTV.Extenstions {
                 );
 
                 //Console.WriteLine(ttt.GetMethods().Select(m => m.Name).ToList().Join("\n"));
-                var mmm = ttt.GetMethod("get_CurrentValue")
+                var mmm = ttt.GetProperty("CurrentValue", typeof(string));
                 /*.MakeGenericMethod(  new Type[] {
                                 entityParameter.Type.GenericTypeArguments[0]
                                 , property.ClrType
@@ -423,7 +461,7 @@ namespace ASTV.Extenstions {
                 
                 var equalsExpression =
                     Expression.Equal(
-                        Expression.Call(       
+                        Expression.Property(       
 
                         Expression.Call(
                             //entityParameter.Type.GenericTypeArguments[0].GetMethod("Property"),
@@ -440,8 +478,11 @@ namespace ASTV.Extenstions {
                         
                             
                             ,
+                                
+                                Expression.Constant(keyValues[i],typeof(string) )
                             
-                     // Expression.Convert(
+                          /*  
+                      Expression.Convert(
                             //Expression.Constant(keyValues[i], typeof(object))
                             //Expression.Constant(keyValues[i], property.ClrType)
                             //Expression.Constant(keyValues[i], property.ClrType)
@@ -450,10 +491,12 @@ namespace ASTV.Extenstions {
                                 keyValuesConstant,
                                 GetValueMethod,
                                 Expression.Constant(i))
-                         /*
+                         
                                 , 
                             property.ClrType)
                           */
+                         
+                          //Expression.Constant("0203", typeof(string)) // this gets result!!
 
                             );
             if (predicate == null)  {
