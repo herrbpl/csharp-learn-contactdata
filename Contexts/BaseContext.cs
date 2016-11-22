@@ -81,11 +81,12 @@ namespace ASTV.Services {
             */
             
             this.GetChangeTrackerPredicate(entity);
+            /*
             var vkv = this.GetVersionKeyValues(entity);
             for (var i = 0; i < vkv.Count; i++) {
                 Console.WriteLine("VKV value: {0}", vkv[i]);
             }
-            
+            */
         
             VersionInfo x = GetVersionInfo<TEntity>(entity);
             var entityType = Model.FindEntityType(typeof(TEntity));
@@ -96,7 +97,7 @@ namespace ASTV.Services {
             
             if (previous != null) {
                 version =  Entry(previous).Property<int>("Version").CurrentValue;
-                Console.WriteLine("Previous version: {0}", previous.Serialize(null));
+              //  Console.WriteLine("Previous version: {0}", previous.Serialize(null));
                 Entry(previous).Property<DateTime>("ValidUntil").CurrentValue = DateTime.Now;
                 Entry(previous).Property<Boolean>("IsCurrent").CurrentValue = false;
                 Entry(previous).State = EntityState.Modified;
@@ -105,9 +106,9 @@ namespace ASTV.Services {
             version++;
             // need to retrieve previous latest entry 
             
-            Console.WriteLine("Version info before: \n{0}\n",  x.Serialize( new List<string>() { "aa" }));
+            //Console.WriteLine("Version info before: \n{0}\n",  x.Serialize( new List<string>() { "aa" }));
             
-            Console.WriteLine("x.Version {0} {1}", x.Version, x.Version+1);
+            //Console.WriteLine("x.Version {0} {1}", x.Version, x.Version+1);
             
             Entry(entity).Property<int>("Version").CurrentValue = version;
             Entry(entity).Property<DateTime>("ValidFrom").CurrentValue = DateTime.Now;

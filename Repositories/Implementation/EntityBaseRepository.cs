@@ -56,18 +56,18 @@ namespace ASTV.Services {
 
             */
             // this line is probably creating it in changetrcker?
-            _context.printChangeTracker<T>("BeforeCreatEntry");
-            _context.printSet<T>("BeforeCreatEntry");
+          //  _context.printChangeTracker<T>("BeforeCreatEntry");
+          //  _context.printSet<T>("BeforeCreatEntry");
             EntityEntry dbEntityEntry = _context.Entry<T>(entity);
-            _context.printChangeTracker<T>("BeforeAdd");
-            _context.printSet<T>("BeforeAdd");     
+          //  _context.printChangeTracker<T>("BeforeAdd");
+          //  _context.printSet<T>("BeforeAdd");     
             //dbEntityEntry.Property("Version").CurrentValue = (int)dbEntityEntry.Property("Version").CurrentValue+1;
             _context.Set<T>().Add(entity);
-            _context.printChangeTracker<T>("AfterAdd");
-            _context.printSet<T>("AfterAdd");        
+          //  _context.printChangeTracker<T>("AfterAdd");
+          //  _context.printSet<T>("AfterAdd");        
            // _context.SaveChanges();          
-            _context.printChangeTracker<T>("AfterSave");
-            _context.printSet<T>("AfterSave");
+          //  _context.printChangeTracker<T>("AfterSave");
+          //  _context.printSet<T>("AfterSave");
             Console.WriteLine("======================================================="); 
 
             /*            

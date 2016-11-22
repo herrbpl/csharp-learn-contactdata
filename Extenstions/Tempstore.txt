@@ -1,0 +1,75 @@
+ public static TEntity LatestSQL<TEntity>(this DbSet<TEntity> set, TEntity entity) where TEntity : class {
+
+            if (entity == null ) throw new ArgumentNullException();
+            var vk = set.GetVersionKeys();
+            if (vk == null) throw new ArgumentException("Version keys are not defined for set");
+
+            var context =  set.GetService<IDbContextServices>().CurrentContext.Context; 
+            var entityType = context.Model.FindEntityType(typeof(TEntity));
+            string schema = (entityType.Relational().Schema == ""? entityType.Relational().Schema+"." : "");
+            //entityType.Relational().Schema
+            string sql = @"SELECT * FROM {0}{1} as T WHERE Version = (SELECT MAX(Version) FROM {0}{1} WHERE #KEY#) AND #KEY#)";
+
+            string ak = "";
+            object[] sqlParams = {};
+
+            foreach(var property in vk.Properties) {
+                if (property.Name != "Version") {
+                    // get value of entity of given name.
+                    var oo = entity.GetType().GetTypeInfo().
+                        GetProperties().Where(p => p.Name == property.Name).
+                        Select(p => p.GetValue(entity,null)).FirstOrDefault();
+                    
+                    // value I'm comparing to, aka value of key
+                    var value = Expression.Constant(oo, oo.GetType() );
+                    
+                    ak += sqlParams.Count()>0 ? " AND ":"";
+                    ak += " \""+ property.Relational().
+                        ColumnName.Replace("\"", "#quot;#quot").Replace("#quot;", "\"") +"\" = @p"+sqlParams.Count().ToString();
+                    
+
+                    sqlParams.Append( 
+                        new SqlParameter {
+                            ParameterName = "p"+sqlParams.Count().ToString() 
+                            , Value = value
+                        }
+
+                    );
+
+                }
+            }
+            sql = sql.Replace("#KEY#", "(1=1)");
+            //sql = sql.Replace("#KEY#", ak);
+            sql = String.Format(sql, schema, entityType.Relational().TableName);
+            
+            
+            Console.WriteLine(sql);
+            //var x = set.FromSql<TEntity>(sql, sqlParams).SingleOrDefault();
+            var x = set.FromSql<TEntity>(sql).SingleOrDefault();
+            
+
+            return x;
+        }
+
+
+                public static IQueryable<TEntity> IsCurrent<TEntity>(this IQueryable<TEntity> source,  TEntity entity) where TEntity : class
+        {
+            if (typeof(DbSet<TEntity>).IsAssignableFrom(source.GetType())) {
+                var set = (DbSet<TEntity>)source;                                
+                                
+                var parameter = Expression.Parameter(typeof(TEntity), "x");
+                var expression = Expression.Lambda(
+                    //Expression.And(  
+                        Expression.Equal(
+                            Expression.Call(
+                                PropertyMethod.MakeGenericMethod(typeof(Boolean) )
+                                , parameter
+                                , Expression.Constant("IsCurrent", typeof(string))
+                            )
+                            ,
+                            Expression.Constant(true)),                            
+                        parameter) as Expression<Func<TEntity, bool>>;
+                return source.Where(expression);
+            }        
+            return source;
+        }

@@ -174,58 +174,7 @@ namespace ASTV.Extenstions {
             return null;
         }
 
-        public static TEntity LatestSQL<TEntity>(this DbSet<TEntity> set, TEntity entity) where TEntity : class {
-
-            if (entity == null ) throw new ArgumentNullException();
-            var vk = set.GetVersionKeys();
-            if (vk == null) throw new ArgumentException("Version keys are not defined for set");
-
-            var context =  set.GetService<IDbContextServices>().CurrentContext.Context; 
-            var entityType = context.Model.FindEntityType(typeof(TEntity));
-            string schema = (entityType.Relational().Schema == ""? entityType.Relational().Schema+"." : "");
-            //entityType.Relational().Schema
-            string sql = @"SELECT * FROM {0}{1} as T WHERE Version = (SELECT MAX(Version) FROM {0}{1} WHERE #KEY#) AND #KEY#)";
-
-            string ak = "";
-            object[] sqlParams = {};
-
-            foreach(var property in vk.Properties) {
-                if (property.Name != "Version") {
-                    // get value of entity of given name.
-                    var oo = entity.GetType().GetTypeInfo().
-                        GetProperties().Where(p => p.Name == property.Name).
-                        Select(p => p.GetValue(entity,null)).FirstOrDefault();
-                    
-                    // value I'm comparing to, aka value of key
-                    var value = Expression.Constant(oo, oo.GetType() );
-                    
-                    ak += sqlParams.Count()>0 ? " AND ":"";
-                    ak += " \""+ property.Relational().
-                        ColumnName.Replace("\"", "#quot;#quot").Replace("#quot;", "\"") +"\" = @p"+sqlParams.Count().ToString();
-                    
-
-                    sqlParams.Append( 
-                        new SqlParameter {
-                            ParameterName = "p"+sqlParams.Count().ToString() 
-                            , Value = value
-                        }
-
-                    );
-
-                }
-            }
-            sql = sql.Replace("#KEY#", "(1=1)");
-            //sql = sql.Replace("#KEY#", ak);
-            sql = String.Format(sql, schema, entityType.Relational().TableName);
-            
-            
-            Console.WriteLine(sql);
-            //var x = set.FromSql<TEntity>(sql, sqlParams).SingleOrDefault();
-            var x = set.FromSql<TEntity>(sql).SingleOrDefault();
-            
-
-            return x;
-        }
+        
         
 
         public static Expression<Func<TEntity, bool>> BuildVersionQueryPredicate<TEntity>(this DbSet<TEntity> set, TEntity entity) where TEntity : class
@@ -241,6 +190,7 @@ namespace ASTV.Extenstions {
             ParameterExpression parameter = Expression.Parameter(typeof(TEntity), "x");
 
             foreach(var property in vk.Properties) {
+                
                 if (property.Name != "Version") {
                     // get value of entity of given name.
                     var oo = entity.GetType().GetTypeInfo().
@@ -270,32 +220,65 @@ namespace ASTV.Extenstions {
         }
 
 
+
+        
         public static void GetChangeTrackerPredicate<TEntity>(this DbContext context, TEntity entity) where TEntity : class 
         {
+            
             if (entity == null ) throw new ArgumentNullException();
             var set = context.Set<TEntity>();
+            var entityType = context.Model.FindEntityType(typeof(TEntity));
+            // EntityEntry<TEntity> x.Property<propertytype>("propertyname").CurrentValue
+            var entry = context.Entry<TEntity>(entity);
+
+            var mi1 = GetFunc<TEntity>();
+
+            var mi2 = mi1(entry);
+
+            Console.WriteLine("MI2 \n{0}\n/MI2", mi2 != null? ListObject(mi2): "(null)");
+
+
+            var tt = typeof(EntityEntry<TEntity>);
+            
 
             var vk = set.GetVersionKeys();
+            foreach(var property in vk.Properties) {
+                if (property != null && property.GetPropertyInfo() != null ) {
+                var mi = property.GetPropertyInfo().GetGetMethod();
+                
+                    Console.WriteLine("MI \n{0}\n/MI", mi != null? ListObject(mi): "(null)");
+                }
+                
+            }
+
             if (vk == null) throw new ArgumentException("Version keys are not defined for set");
 
             var properties  = vk.Properties.Where(p => p.Name != "Version").ToList();            
             var parameter = Expression.Parameter(typeof(EntityEntry<TEntity>), "x");
-            var parameter2 = Expression.Parameter(typeof(TEntity), "y");            
+                        
             var vb = context.GetVersionKeyValues(entity);
             var predicate = BuildPredicate(properties, vb, parameter);
             
             Console.WriteLine(predicate.ToString());
             Console.WriteLine(parameter.ToString());
-            var xp = new  ParameterExpression[2];
-            xp[0] = parameter;
-            xp[1] = parameter2;
             //var lambda = Expression.Lambda(predicate, xp) as Expression<Func<EntityEntry<TEntity>,TEntity, bool>>;
             var lambda = Expression.Lambda(predicate, parameter) as Expression<Func<EntityEntry<TEntity>, bool>>;
             Console.WriteLine("Lambda {0}", lambda);
             IQueryable<EntityEntry<TEntity>> ccc = context.ChangeTracker.Entries<TEntity>().AsQueryable();
-            
-            ccc.Where(lambda).ToList();
-            Console.WriteLine("Build predicate is: {0}", predicate.ToString());
+            string xs = ccc.Where(t => t.Property<string>("EmployeeId").CurrentValue == "0203").ToList().Select(m =>  
+                m.Property<int>("Version").CurrentValue.ToString() + " " + m.Property<string>("EmployeeId").CurrentValue ).
+                ToList().Join(" \n");
+            Console.WriteLine("BODY OF LAMBDA \n{0}\nEND OF BODY", lambda.Body);
+
+          
+
+            string ss = ccc.Where(lambda).ToList().Select(m =>  
+                m.Property<int>("Version").CurrentValue.ToString() + " " + m.Property<string>("EmployeeId").CurrentValue ).
+                ToList().Join(" \n");
+
+            Console.WriteLine("VALUES FOUND {0}", ccc.Where(lambda).ToList().Count());
+            Console.WriteLine("VALUES FOUND {0}", xs);
+            Console.WriteLine("Build predicate is: {0}\n{1}", predicate.ToString(), ss);
 
         }
         
@@ -327,6 +310,39 @@ namespace ASTV.Extenstions {
             return new ValueBuffer(keyValues);
         }
         
+
+
+
+        private static readonly Type PropertyEntityType  = typeof(PropertyEntry<,>);
+
+        
+
+        public  static Func<EntityEntry<TEntity>, MethodInfo> GetFunc<TEntity>() where TEntity : class {
+            var sourceParameter = Expression.Parameter(typeof(EntityEntry<TEntity>), "source");
+            // get     // EntityEntry<TEntity> x.Property<propertytype>("propertyname").CurrentValue
+            
+            var str = new Type[] { typeof(string) };
+
+            /*
+            var sourcePropertyRetriever = Expression.Property(
+                sourceParameter
+                , typeof(EntityEntry<TEntity>).GetMethod("Property", str).MakeGenericMethod(typeof(TEntity))
+            );
+            -*/
+            
+            var lambda = Expression.Lambda<Func<EntityEntry<TEntity>, MethodInfo>>(
+                Expression.Call(
+                    sourceParameter
+                    , typeof(EntityEntry<TEntity>).GetMethod("Property", str).MakeGenericMethod(typeof(string))
+                    , Expression.Constant("EmployeeId", typeof(string))
+                )           
+                , sourceParameter                
+            );
+            Console.WriteLine("Lambda \n{0}\n/dLambda", lambda.ToString());
+            return lambda.Compile();            
+            
+        }
+
          /// <summary>
          ///   Builds predicate for comparison. Properties that are going to be used, will be given.
          /// <see><a href="https://github.com/aspnet/EntityFramework/blob/f9adcb64fdf668163377beb14251e67d17f60fa0/src/Microsoft.EntityFrameworkCore/Internal/EntityFinder.cs">https://github.com/aspnet/EntityFramework/blob/f9adcb64fdf668163377beb14251e67d17f60fa0/src/Microsoft.EntityFrameworkCore/Internal/EntityFinder.cs</a></see>
@@ -341,17 +357,25 @@ namespace ASTV.Extenstions {
             ValueBuffer keyValues,
             ParameterExpression entityParameter            
             )
-        {
+        {   
+            
+            Type tt = typeof(PropertyEntry<,>);
+            Console.WriteLine("METHODS PropertyEntity ");            
+            Console.WriteLine(PropertyEntityType.GetTypeInfo().GetMethods().Select(m => m.Name).ToList().Join("\n"));
+            Console.WriteLine("/METHODS PropertyEntity ");
+            Console.WriteLine("METHODS EntityParameter.Type {0} ", entityParameter.Type);
+            Console.WriteLine(entityParameter.Type.GetMethods().Select(m => m.Name).ToList().Join("\n"));
+            Console.WriteLine("/METHODS EntityParameter.Type {0} ", entityParameter.Type);
             var keyValuesConstant = Expression.Constant(keyValues);
             //Console.WriteLine("Type of parameter expression is \n{0}", ListObject(entityParameter));
             var xxx = entityParameter.Type.GenericTypeArguments.ToList().Select(x => x.FullName).Join(", ");
             var y = Expression.Parameter( entityParameter.Type.GenericTypeArguments[0], "y");
             
-            Console.WriteLine(entityParameter.Type.GenericTypeArguments[0].GetMethods().Select(m => m.Name).ToList().Join("\n"));
-            Console.WriteLine("BLAAAH");
+            //Console.WriteLine(entityParameter.Type.GenericTypeArguments[0].GetMethods().Select(m => m.Name).ToList().Join("\n"));
+            //Console.WriteLine("BLAAAH");
 
             
-            Type tt = typeof(PropertyEntry<,>);
+            //Type tt = typeof(PropertyEntry<,>);
 
             //Console.WriteLine(entityParameter.Type.GetMethods().Select(m => m.Name).ToList().Join("\n"));
             MethodInfo xxz = null;
@@ -364,8 +388,8 @@ namespace ASTV.Extenstions {
                                     )
                                     .FirstOrDefault() != null && m.IsGenericMethod == true
                     )) {
-                Console.WriteLine("IsGeneric: {0}, IsGenericMethodDefinition {1}", mm.IsGenericMethod, mm.IsGenericMethodDefinition);
-                Console.WriteLine("Params {0}", mm.GetParameters().Select(m => (m.Name + ": "+m.ParameterType.Name)).ToList().Join("\n"));
+               // Console.WriteLine("IsGeneric: {0}, IsGenericMethodDefinition {1}", mm.IsGenericMethod, mm.IsGenericMethodDefinition);
+               // Console.WriteLine("Params {0}", mm.GetParameters().Select(m => (m.Name + ": "+m.ParameterType.Name)).ToList().Join("\n"));
                 xxz = mm;
                 //Console.WriteLine("Type of method is \n{0}", ListObject(mm));    
             }
@@ -386,7 +410,7 @@ namespace ASTV.Extenstions {
                     }
                 );
 
-                Console.WriteLine(ttt.GetMethods().Select(m => m.Name).ToList().Join("\n"));
+                //Console.WriteLine(ttt.GetMethods().Select(m => m.Name).ToList().Join("\n"));
                 var mmm = ttt.GetMethod("get_CurrentValue")
                 /*.MakeGenericMethod(  new Type[] {
                                 entityParameter.Type.GenericTypeArguments[0]
@@ -415,14 +439,20 @@ namespace ASTV.Extenstions {
                             
                             ,
                             
-                        //Expression.Convert(
-                           // Expression.Constant(keyValues[i], typeof(object)),
-                             Expression.Call(
+                     // Expression.Convert(
+                            //Expression.Constant(keyValues[i], typeof(object))
+                            //Expression.Constant(keyValues[i], property.ClrType)
+                            //Expression.Constant(keyValues[i], property.ClrType)
+                          
+                            Expression.Call(
                                 keyValuesConstant,
                                 GetValueMethod,
                                 Expression.Constant(i))
-                          //      , 
-                          //  property.ClrType)
+                         /*
+                                , 
+                            property.ClrType)
+                          */
+
                             );
             if (predicate == null)  {
                 predicate = equalsExpression;
@@ -465,27 +495,9 @@ namespace ASTV.Extenstions {
                             );
         }
 
-        public static IQueryable<TEntity> IsCurrent<TEntity>(this IQueryable<TEntity> source,  TEntity entity) where TEntity : class
-        {
-            if (typeof(DbSet<TEntity>).IsAssignableFrom(source.GetType())) {
-                var set = (DbSet<TEntity>)source;                                
-                                
-                var parameter = Expression.Parameter(typeof(TEntity), "x");
-                var expression = Expression.Lambda(
-                    //Expression.And(  
-                        Expression.Equal(
-                            Expression.Call(
-                                PropertyMethod.MakeGenericMethod(typeof(Boolean) )
-                                , parameter
-                                , Expression.Constant("IsCurrent", typeof(string))
-                            )
-                            ,
-                            Expression.Constant(true)),                            
-                        parameter) as Expression<Func<TEntity, bool>>;
-                return source.Where(expression);
-            }        
-            return source;
-        }
+
+
+        
 
         public static void printChangeTracker<TEntity>(this DbContext context, string tracing) where TEntity : class {
             Console.WriteLine("[{0}] ChangeTracker has {1} entries", tracing, context.ChangeTracker.Entries<TEntity>().Count());
