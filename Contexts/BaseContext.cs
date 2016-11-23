@@ -64,56 +64,41 @@ namespace ASTV.Services {
         
         public override EntityEntry<TEntity> Add<TEntity>(TEntity entity)
         {
-           // this.printChangeTracker<TEntity>();
-           //  this.printSet<TEntity>();
            
-            // get version info. Actually, saving back should occur as quickly as possible.
-            // otherwise some other process might grab version no.
-            // ideally this should be executed as transaction
-            // should always get data from changetracker
-            // if latest is equal to provided value, then do not add a copy but return latest.
+            if (typeof(IEntityVersioning).IsAssignableFrom(entity.GetType())) {
 
-
-            /*
-            ChangeTracker.Entries<TEntity>().Where(
-                p => p.Property("")
-            )
-            */
             
-            this.GetChangeTrackerPredicate(entity);
-            /*
-            var vkv = this.GetVersionKeyValues(entity);
-            for (var i = 0; i < vkv.Count; i++) {
-                Console.WriteLine("VKV value: {0}", vkv[i]);
+            
+                this.GetChangeTrackerPredicate(entity);
+            
+            
+                VersionInfo x = GetVersionInfo<TEntity>(entity);
+                var entityType = Model.FindEntityType(typeof(TEntity));
+                
+                var previous = Set<TEntity>().Latest(entity);
+                // If entity with same key is given and is 
+                int version = 0;
+                
+                if (previous != null) {
+                    version =  Entry(previous).Property<int>("Version").CurrentValue;
+                //  Console.WriteLine("Previous version: {0}", previous.Serialize(null));
+                    Entry(previous).Property<DateTime>("ValidUntil").CurrentValue = DateTime.Now;
+                    Entry(previous).Property<Boolean>("IsCurrent").CurrentValue = false;
+                    Entry(previous).State = EntityState.Modified;
+                } 
+                
+                version++;
+                // need to retrieve previous latest entry 
+                
+                //Console.WriteLine("Version info before: \n{0}\n",  x.Serialize( new List<string>() { "aa" }));
+                
+                //Console.WriteLine("x.Version {0} {1}", x.Version, x.Version+1);
+                
+                Entry(entity).Property<int>("Version").CurrentValue = version;
+                Entry(entity).Property<DateTime>("ValidFrom").CurrentValue = DateTime.Now;
+                Entry(entity).Property<DateTime>("ValidUntil").CurrentValue = DateTime.MaxValue;
+                Entry(entity).Property<Boolean>("IsCurrent").CurrentValue = true;
             }
-            */
-        
-            VersionInfo x = GetVersionInfo<TEntity>(entity);
-            var entityType = Model.FindEntityType(typeof(TEntity));
-            
-            var previous = Set<TEntity>().Latest(entity);
-            // If entity with same key is given and is 
-            int version = 0;
-            
-            if (previous != null) {
-                version =  Entry(previous).Property<int>("Version").CurrentValue;
-              //  Console.WriteLine("Previous version: {0}", previous.Serialize(null));
-                Entry(previous).Property<DateTime>("ValidUntil").CurrentValue = DateTime.Now;
-                Entry(previous).Property<Boolean>("IsCurrent").CurrentValue = false;
-                Entry(previous).State = EntityState.Modified;
-            } 
-             
-            version++;
-            // need to retrieve previous latest entry 
-            
-            //Console.WriteLine("Version info before: \n{0}\n",  x.Serialize( new List<string>() { "aa" }));
-            
-            //Console.WriteLine("x.Version {0} {1}", x.Version, x.Version+1);
-            
-            Entry(entity).Property<int>("Version").CurrentValue = version;
-            Entry(entity).Property<DateTime>("ValidFrom").CurrentValue = DateTime.Now;
-            Entry(entity).Property<DateTime>("ValidUntil").CurrentValue = DateTime.MaxValue;
-            Entry(entity).Property<Boolean>("IsCurrent").CurrentValue = true;
             
             var entry = base.Add(entity);
             

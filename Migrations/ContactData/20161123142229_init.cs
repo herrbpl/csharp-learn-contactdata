@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace src.Migrations.ContactData
 {
-    public partial class Completerebuild : Migration
+    public partial class init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -13,7 +13,7 @@ namespace src.Migrations.ContactData
                 name: "ContactData",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
+                    ChangeId = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Address1 = table.Column<string>(maxLength: 255, nullable: true),
                     Address2 = table.Column<string>(maxLength: 255, nullable: true),
@@ -22,8 +22,10 @@ namespace src.Migrations.ContactData
                     County = table.Column<string>(maxLength: 30, nullable: true),
                     EmailBusiness = table.Column<string>(maxLength: 50, nullable: true),
                     EmailPersonal = table.Column<string>(maxLength: 50, nullable: true),
-                    EmployeeId = table.Column<string>(maxLength: 6, nullable: true),
+                    EmployeeId = table.Column<string>(maxLength: 6, nullable: false),
                     FirstName = table.Column<string>(maxLength: 30, nullable: true),
+                    IsCurrent = table.Column<bool>(nullable: false),
+                    IsDeleted = table.Column<bool>(nullable: false),
                     JobTitle = table.Column<string>(maxLength: 100, nullable: true),
                     LastName = table.Column<string>(maxLength: 50, nullable: true),
                     MobileBusiness = table.Column<string>(maxLength: 15, nullable: true),
@@ -36,11 +38,15 @@ namespace src.Migrations.ContactData
                     UrlDriverLicense = table.Column<string>(maxLength: 255, nullable: true),
                     UrlIdCard = table.Column<string>(maxLength: 255, nullable: true),
                     UrlLivingPermit = table.Column<string>(maxLength: 255, nullable: true),
+                    ValidFrom = table.Column<DateTime>(nullable: false),
+                    ValidUntil = table.Column<DateTime>(nullable: false),
+                    Version = table.Column<int>(nullable: false),
                     ZipCode = table.Column<string>(maxLength: 6, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ContactData", x => x.Id);
+                    table.PrimaryKey("PK_ContactData", x => x.ChangeId);
+                    table.UniqueConstraint("AK_ContactData_EmployeeId_Version", x => new { x.EmployeeId, x.Version });
                 });
 
             migrationBuilder.CreateTable(

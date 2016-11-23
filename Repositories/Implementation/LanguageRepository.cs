@@ -4,16 +4,16 @@ using System.Linq;
 using System.Collections.Generic;
 
 namespace ASTV.Services {
-    public class LanguageRepository<TContext>: EntityBaseRepository<Language, TContext>                
-        where TContext : ContactDataContext       
+
+    public interface ILanguageRepository: IEntityBaseRepository<Language, ContactDataContext> {}
+
+    public class LanguageRepository: EntityBaseRepository<Language, ContactDataContext>, ILanguageRepository                
+        
     {        
-        public LanguageRepository(TContext context) 
+        public LanguageRepository(ContactDataContext context) 
             : base(context)
         {
                           
-        } 
-        public override IEnumerable<Language> GetAll() { 
-            return _context.Language.AsNoTracking().ToList();
-        }
+        }      
     }
 }

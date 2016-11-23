@@ -22,6 +22,7 @@ namespace ASTV.Extenstions {
         {
             //var context = set.GetInfrastructure<IServiceProvider>().GetService<IDbContextServices>().CurrentContext.Context;
             var context =  set.GetService<IDbContextServices>().CurrentContext.Context; 
+            
             var entityType = context.Model.FindEntityType(typeof(TEntity));
             var keys = entityType.GetKeys();
             var entries = context.ChangeTracker.Entries<TEntity>();

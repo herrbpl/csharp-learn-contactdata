@@ -34,7 +34,8 @@ namespace ConsoleApplication
         {
             // Add framework services.
             services.AddDbContext<EmployeeContext>(options =>
-               options.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True"));
+               options.UseSqlServer(@"Server=TISCALA.NTSERVER2.SISE;Database=scalaDB;Trusted_Connection=True;MultipleActiveResultSets=true"));
+               //options.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True"));
             services.AddDbContext<ContactDataContext>(options =>
                options.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True"));                      
         }
@@ -46,16 +47,20 @@ namespace ConsoleApplication
         {            
             Startup s = new Startup(new HostingEnvironment() { ContentRootPath = AppContext.BaseDirectory }); // is this line neccessary ?
             DbContextOptionsBuilder<EmployeeContext> optionsBuilder = new DbContextOptionsBuilder<EmployeeContext>();
-            optionsBuilder.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True");
+           // optionsBuilder.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True");
+            optionsBuilder.UseSqlServer(@"Server=TISCALA.NTSERVER2.SISE;Database=scalaDB;Trusted_Connection=True;MultipleActiveResultSets=true");
             
-            
+            DbContextOptionsBuilder<ContactDataContext> optionsBuilder2 = new DbContextOptionsBuilder<ContactDataContext>();
+            optionsBuilder2.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True");
 
             using (var db = new EmployeeContext(optionsBuilder.Options))
             {
                 
-                var cdb = new ContactDataContext();
+                var cdb = new ContactDataContext(optionsBuilder2.Options);
+                
 
-                LanguageRepository<ContactDataContext> lr = new LanguageRepository<ContactDataContext>(cdb);
+                //LanguageRepository<ContactDataContext> lr = new LanguageRepository<ContactDataContext>(cdb);
+                LanguageRepository lr = new LanguageRepository(cdb);
 
                 // add language;
                 if (!lr.GetAll().Any(l => l.Code=="EE")) {
@@ -115,7 +120,8 @@ namespace ConsoleApplication
                 db.SaveChanges();
 
                 // how will it work when there is no connected data loaded.
-                Employee ex3 = db.Employees.Find(2);
+                //Employee ex3 = db.Employees.Find(2);
+                Employee ex3 = er.GetList(e => e.EmployeeId == "0203").SingleOrDefault();
                 if (ex3 != null)
                     Console.WriteLine("{0} {1} {2}\n{3}", ex3.Id, ex3.Name, ex3.EmployeeId, ex3.Serialize(null));
 

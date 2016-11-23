@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using ASTV.Services;
 
-namespace src.Migrations
+namespace src.Migrations.ContactData
 {
-    [DbContext(typeof(EmployeeContext))]
-    [Migration("20161116130606_removing contactlanguage field")]
-    partial class removingcontactlanguagefield
+    [DbContext(typeof(ContactDataContext))]
+    [Migration("20161123142229_init")]
+    partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -19,7 +19,7 @@ namespace src.Migrations
 
             modelBuilder.Entity("ASTV.Models.Employee.ContactData", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ChangeId")
                         .ValueGeneratedOnAdd();
 
                     b.Property<string>("Address1")
@@ -43,8 +43,16 @@ namespace src.Migrations
                     b.Property<string>("EmailPersonal")
                         .HasAnnotation("MaxLength", 50);
 
+                    b.Property<string>("EmployeeId")
+                        .IsRequired()
+                        .HasAnnotation("MaxLength", 6);
+
                     b.Property<string>("FirstName")
                         .HasAnnotation("MaxLength", 30);
+
+                    b.Property<bool>("IsCurrent");
+
+                    b.Property<bool>("IsDeleted");
 
                     b.Property<string>("JobTitle")
                         .HasAnnotation("MaxLength", 100);
@@ -82,64 +90,20 @@ namespace src.Migrations
                     b.Property<string>("UrlLivingPermit")
                         .HasAnnotation("MaxLength", 255);
 
+                    b.Property<DateTime>("ValidFrom");
+
+                    b.Property<DateTime>("ValidUntil");
+
+                    b.Property<int>("Version");
+
                     b.Property<string>("ZipCode")
                         .HasAnnotation("MaxLength", 6);
 
-                    b.HasKey("Id");
+                    b.HasKey("ChangeId");
+
+                    b.HasAlternateKey("EmployeeId", "Version");
 
                     b.ToTable("ContactData");
-                });
-
-            modelBuilder.Entity("ASTV.Models.Employee.Education", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<int?>("ContactDataId");
-
-                    b.Property<int?>("LevelId");
-
-                    b.Property<string>("NameOfDegree")
-                        .HasAnnotation("MaxLength", 255);
-
-                    b.Property<string>("SchoolName")
-                        .HasAnnotation("MaxLength", 100);
-
-                    b.Property<string>("Specification")
-                        .HasAnnotation("MaxLength", 255);
-
-                    b.Property<string>("UrlDiploma")
-                        .HasAnnotation("MaxLength", 255);
-
-                    b.Property<int?>("YearCompleted");
-
-                    b.Property<int>("YearStarted");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContactDataId");
-
-                    b.HasIndex("LevelId");
-
-                    b.ToTable("Education");
-                });
-
-            modelBuilder.Entity("ASTV.Models.Employee.Employee", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<int?>("ContactDataId");
-
-                    b.Property<string>("EmployeeId");
-
-                    b.Property<string>("Name");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContactDataId");
-
-                    b.ToTable("Employees");
                 });
 
             modelBuilder.Entity("ASTV.Models.Generic.EducationLevel", b =>
@@ -172,24 +136,6 @@ namespace src.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Language");
-                });
-
-            modelBuilder.Entity("ASTV.Models.Employee.Education", b =>
-                {
-                    b.HasOne("ASTV.Models.Employee.ContactData", "ContactData")
-                        .WithMany("Education")
-                        .HasForeignKey("ContactDataId");
-
-                    b.HasOne("ASTV.Models.Generic.EducationLevel", "Level")
-                        .WithMany()
-                        .HasForeignKey("LevelId");
-                });
-
-            modelBuilder.Entity("ASTV.Models.Employee.Employee", b =>
-                {
-                    b.HasOne("ASTV.Models.Employee.ContactData", "ContactData")
-                        .WithMany()
-                        .HasForeignKey("ContactDataId");
                 });
         }
     }

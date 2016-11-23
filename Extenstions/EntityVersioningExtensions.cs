@@ -58,7 +58,7 @@ namespace ASTV.Extenstions {
                         .Property<int>("Version");
 
                     modelBuilder.Entity(entityType.ClrType)
-                        .Property<int>("ChangeId").ValueGeneratedOnAdd();
+                        .Property<int>("ChangeId");//.Has ValueGeneratedOnAdd().UseSqlServerIdentityColumn().HasDefaultValueSql("IDENTITY");
                     
                     // need to create alternate key
                     var akey = modelBuilder.Entity(entityType.ClrType).Metadata.FindPrimaryKey();
