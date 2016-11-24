@@ -13,7 +13,7 @@ namespace ASTV.Services {
 
     public interface IEmployeeRepository: IEntityBaseRepositoryReadonly<Employee, EmployeeContext> {}
     
-    public class EmployeeRepository: EntityBaseRepositoryReadOnly<Employee, EmployeeContext>                            
+    public class EmployeeRepository: EntityBaseRepositoryReadOnly<Employee, EmployeeContext>, IEmployeeRepository                            
     {
         // It is highly unusual, if employee list changes between lifetime of repository object as repo is shortlived.
         protected IList<Employee> _cache; 
