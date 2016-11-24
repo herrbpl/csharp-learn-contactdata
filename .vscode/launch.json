@@ -7,12 +7,18 @@
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceRoot}\\bin\\Debug\\netcoreapp1.0\\src.dll",
-            "args": [],
+            "args": [],             
             "cwd": "${workspaceRoot}",
             "externalConsole": false,
-            "stopAtEntry": false,
-            "internalConsoleOptions": "openOnSessionStart"
+            "stopAtEntry": false,            
+            "internalConsoleOptions": "openOnSessionStart",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "EnvironmentName":  "Development"
+                         
+            },
         },
+        
         {
             "name": ".NET Core Attach",
             "type": "coreclr",

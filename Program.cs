@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.AspNetCore.Hosting.Internal;
 using ASTV.Services;
 using System.Linq;
@@ -20,6 +21,7 @@ namespace ConsoleApplication
         {
             var builder = new ConfigurationBuilder () 
                 .SetBasePath(env.ContentRootPath)
+                .AddEnvironmentVariables()
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);
           
@@ -32,12 +34,19 @@ namespace ConsoleApplication
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
+
+            string eDbConfig = Configuration.GetConnectionString("EmployeeDatabase") == null?
+                                    Configuration.GetConnectionString("EmployeeDatabase"):
+                                    @"Server=TISCALA.NTSERVER2.SISE;Database=scalaDB;Trusted_Connection=True;MultipleActiveResultSets=true";
+            string cDbConfig = Configuration.GetConnectionString("ContactDataDatabase") == null?
+                                    Configuration.GetConnectionString("ContactDataDatabase"):
+                                    @"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True";
+
             // Add framework services.
-            services.AddDbContext<EmployeeContext>(options =>
-               options.UseSqlServer(@"Server=TISCALA.NTSERVER2.SISE;Database=scalaDB;Trusted_Connection=True;MultipleActiveResultSets=true"));
-               //options.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True"));
-            services.AddDbContext<ContactDataContext>(options =>
-               options.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True"));                      
+            services.AddDbContext<EmployeeContext>(options =>  options.UseSqlServer(eDbConfig));
+               
+            services.AddDbContext<ContactDataContext>(options => options.UseSqlServer(cDbConfig));                      
         }
     }
     public class Program
@@ -45,13 +54,23 @@ namespace ConsoleApplication
 
         public static void Main(string[] args)
         {            
-            Startup s = new Startup(new HostingEnvironment() { ContentRootPath = AppContext.BaseDirectory }); // is this line neccessary ?
-            DbContextOptionsBuilder<EmployeeContext> optionsBuilder = new DbContextOptionsBuilder<EmployeeContext>();
-           // optionsBuilder.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True");
-            optionsBuilder.UseSqlServer(@"Server=TISCALA.NTSERVER2.SISE;Database=scalaDB;Trusted_Connection=True;MultipleActiveResultSets=true");
+        
+            Startup s = new Startup(new HostingEnvironment() { ContentRootPath = AppContext.BaseDirectory, EnvironmentName = "Development" }); // is this line neccessary ?
+
+            string eDbConfig = s.Configuration.GetConnectionString("EmployeeDatabase") != null?
+                                    s.Configuration.GetConnectionString("EmployeeDatabase"):
+                                    @"Server=TISCALA.NTSERVER2.SISE;Database=scalaDB;Trusted_Connection=True;MultipleActiveResultSets=true";
+            string cDbConfig = s.Configuration.GetConnectionString("ContactDataDatabase") != null?
+                                    s.Configuration.GetConnectionString("ContactDataDatabase"):
+                                    @"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True";
             
-            DbContextOptionsBuilder<ContactDataContext> optionsBuilder2 = new DbContextOptionsBuilder<ContactDataContext>();
-            optionsBuilder2.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FuckYou;Trusted_Connection=True;MultipleActiveResultSets=True");
+            
+            DbContextOptionsBuilder<EmployeeContext> optionsBuilder = new DbContextOptionsBuilder<EmployeeContext>();
+           
+            optionsBuilder.UseSqlServer(eDbConfig);
+            
+            DbContextOptionsBuilder<ContactDataContext> optionsBuilder2 = new DbContextOptionsBuilder<ContactDataContext>();            
+            optionsBuilder2.UseSqlServer(cDbConfig);
 
             using (var db = new EmployeeContext(optionsBuilder.Options))
             {
