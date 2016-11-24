@@ -7,15 +7,17 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 
 using ASTV.Models.Employee;
+using ASTV.Services;
 
 namespace ASTV.Services {
+
+    public interface IEmployeeRepository: IEntityBaseRepositoryReadonly<Employee, EmployeeContext> {}
     
-    public class EmployeeRepository<TContext>: EntityBaseRepositoryReadOnly<Employee, TContext>                
-        where TContext : EmployeeContext       
+    public class EmployeeRepository: EntityBaseRepositoryReadOnly<Employee, EmployeeContext>                            
     {
         // It is highly unusual, if employee list changes between lifetime of repository object as repo is shortlived.
         protected IList<Employee> _cache; 
-        public EmployeeRepository(TContext context) 
+        public EmployeeRepository(EmployeeContext context) 
             : base(context)
         {
                         

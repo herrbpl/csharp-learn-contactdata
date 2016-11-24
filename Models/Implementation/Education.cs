@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 namespace ASTV.Models.Employee {
     public class Education: IEntityBase {
         
-        [JsonIgnore]
+        //[JsonIgnore]
          //public int Id { get; set; }
          public EducationLevel Level { get; set; }
 
