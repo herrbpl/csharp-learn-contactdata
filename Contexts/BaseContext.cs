@@ -118,12 +118,5 @@ namespace ASTV.Services {
 
     }
 
-    public class XBaseContext: BaseContext {
-        public XBaseContext(DbContextOptions<XBaseContext> options)
-            : base(options)
-        {
-
-        }
-    }    
 
 }
