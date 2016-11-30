@@ -17,7 +17,8 @@ namespace ASTV.Services {
         {
             base.OnModelCreating(builder);
             builder.Entity<Employee>().Ignore(p => p.sAMAccountName);
-            builder.Entity<Employee>().Ignore(p => p.SID);                        
+            builder.Entity<Employee>().Ignore(p => p.SID);
+            builder.Entity<Employee>().Ignore(p => p.RegistrationCode);                          
         }
     }
 }

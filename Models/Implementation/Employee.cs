@@ -10,6 +10,7 @@ namespace ASTV.Models.Employee
             
         public string sAMAccountName { get; set; }
         public string SID { get; set; }
+        public string RegistrationCode { get; set; }
     }    
 }
  
