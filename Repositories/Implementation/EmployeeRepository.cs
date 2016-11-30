@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 using ASTV.Models.Employee;
 using ASTV.Services;
@@ -18,11 +19,14 @@ namespace ASTV.Services {
     {
         // It is highly unusual, if employee list changes between lifetime of repository object as repo is shortlived.
         protected IList<Employee> _cache; 
-        protected LDAPContext _ldap;
-        public EmployeeRepository(EmployeeContext context, LDAPContext ldapcontext) 
+        protected ILDAPContext<Employee> _ldap;
+        private ILogger _logger;
+        public EmployeeRepository(EmployeeContext context, ILDAPContext<Employee> ldapcontext, ILoggerFactory loggerFactory) 
             : base(context)
         {
-            this._ldap = ldapcontext;
+            _ldap = ldapcontext;            
+            _logger = loggerFactory.CreateLogger(this.GetType().Name);
+            _logger.LogInformation("Employee repository created!");  
         } 
 
         protected void refreshCache() {

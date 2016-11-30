@@ -54,7 +54,7 @@ namespace ConsoleApplication
 
         public static void Main(string[] args)
         {            
-        
+        /*
             Startup s = new Startup(new HostingEnvironment() { ContentRootPath = AppContext.BaseDirectory, EnvironmentName = "Development" }); // is this line neccessary ?
 
             string eDbConfig = s.Configuration.GetConnectionString("EmployeeDatabase") != null?
@@ -149,7 +149,7 @@ namespace ConsoleApplication
            // testSerialize();
          
             
-
+*/
             Console.WriteLine("Hello World!");
         }
     }
