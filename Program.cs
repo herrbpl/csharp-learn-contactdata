@@ -119,7 +119,7 @@ namespace ConsoleApplication
                 cdb.SaveChanges();
                 
 
-                EmployeeRepository er = new EmployeeRepository(db);                               
+                EmployeeRepository er = new EmployeeRepository(db, null);                               
                 
 
                 foreach(Employee ex in er.GetAll().Where( x => x.Id >= 12)) {

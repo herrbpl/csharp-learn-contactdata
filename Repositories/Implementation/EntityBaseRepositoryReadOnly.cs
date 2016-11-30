@@ -3,7 +3,11 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-//using Microsoft.EntityFrameworkCore.ChangeTracking;
+
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Logging.Debug;
 
 using ASTV.Models.Generic;
 
@@ -19,11 +23,20 @@ namespace ASTV.Services {
         where TContext : DbContext
      {
         protected TContext _context;
+        protected ILogger _logger;
         public EntityBaseRepositoryReadOnly(TContext context) {
             this._context = context;
+            ILoggerFactory lf = new LoggerFactory();
+            lf.AddConsole().AddDebug();
+            this._logger = lf.CreateLogger(this.GetType().Name);
+        }
+        public EntityBaseRepositoryReadOnly(TContext context, ILoggerFactory loggerFactory) {
+            this._context = context;
+            this._logger = loggerFactory.CreateLogger(this.GetType().Name);
         }
         public virtual IEnumerable<T> GetAll()
         {                        
+            
             return _context.Set<T>().ToList();             
         }
         public virtual IEnumerable<T> GetList(Func<T, bool> where, params Expression<Func<T,object>>[] navigationProperties) {

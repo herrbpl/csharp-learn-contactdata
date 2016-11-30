@@ -13,14 +13,16 @@ namespace ASTV.Services {
 
     public interface IEmployeeRepository: IEntityBaseRepositoryReadonly<Employee, EmployeeContext> {}
     
+    // TODO: Add logger DI
     public class EmployeeRepository: EntityBaseRepositoryReadOnly<Employee, EmployeeContext>, IEmployeeRepository                            
     {
         // It is highly unusual, if employee list changes between lifetime of repository object as repo is shortlived.
         protected IList<Employee> _cache; 
-        public EmployeeRepository(EmployeeContext context) 
+        protected LDAPContext _ldap;
+        public EmployeeRepository(EmployeeContext context, LDAPContext ldapcontext) 
             : base(context)
         {
-                        
+            this._ldap = ldapcontext;
         } 
 
         protected void refreshCache() {
