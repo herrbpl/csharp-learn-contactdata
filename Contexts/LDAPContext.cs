@@ -2,12 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Novell.Directory.Ldap;
-using Novell.Directory.Ldap.Utilclass;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
-using System.Security.Principal;
 using System.Linq;
-using ASTV.Extenstions;
+
 
 namespace ASTV.Services {
 
