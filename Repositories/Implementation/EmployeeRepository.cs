@@ -25,7 +25,19 @@ namespace ASTV.Services {
             : base(context)
         {
             _ldap = ldapcontext;            
-            _logger = loggerFactory.CreateLogger(this.GetType().Name);
+            _logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            _logger.LogInformation("Employee repository created!");  
+        } 
+
+         public EmployeeRepository(EmployeeContext context, ILDAPContext<Employee> ldapcontext) 
+            : base(context)
+        {
+            var  loggerFactory = new LoggerFactory()
+            .AddConsole()
+            .AddDebug();
+
+            _ldap = ldapcontext;            
+            _logger = loggerFactory.CreateLogger(this.GetType().FullName);
             _logger.LogInformation("Employee repository created!");  
         } 
 
