@@ -19,6 +19,8 @@ namespace ASTV.Services {
     public interface ILDAPContext<TEntity> {
         IList<TEntity> Search(int scope, string filter );                
         IList<TEntity> Search(int scope, string filter, IDictionary<string, KeyValuePair<string, MethodInfo>> map );
+        IList<TEntity> Search(string searchbase, int scope, string filter, IDictionary<string, KeyValuePair<string, MethodInfo>> map );
+
     }
 
     public class LdapServerConfiguration
@@ -58,7 +60,16 @@ namespace ASTV.Services {
 
         public LdapConnection GetConnection() { return GetConnection(false); }
 
-        // TODO, add maxResults in configuration, search attribs.
+        
+        /// <summary>
+        ///    Searches LDAP for filter, using scope.
+        /// </summary>
+        /// <param name="scope">scope of search</param><br/>
+        /// <param name="filter">ldap string filter</param><br/>
+        /// <param name="attrs">attributes to include in result</param><br/>
+        ///
+        /// <returns>Dictionary with results</returns>
+
         public virtual IList<IDictionary<string, object[]>> Search(int scope, string filter, string[] attrs ) {
 
             IList<IDictionary<string, object[]>> results = new List<IDictionary<string, object[]>>();
@@ -144,9 +155,11 @@ namespace ASTV.Services {
             this._attributeMap = DefaultMap();           
         }
 
-        // we have POCO class. We need to map its parameters to attribs.
-        // TODO: create mapping upon creating of ldap search so it is compiled and thus faster.
-        // TODO: cache compiled mappings in static class cache
+        /// Summary: 
+        ///    http://stackoverflow.com/a/26670705
+        /// <br/>we have POCO class. We need to map its parameters to attribs.
+        /// <br/>TODO: create mapping upon creating of ldap search so it is compiled and thus faster.
+        /// <br/>TODO: cache compiled mappings in static class cache
         private TEntity MapLdapEntry(LdapEntry entry,  IDictionary<string, KeyValuePair<string, MethodInfo>> map) {
             // If method is defined, use this to convert value to required type.
             if (entry == null) return null;
@@ -242,8 +255,16 @@ namespace ASTV.Services {
         public virtual IList<TEntity> Search(int scope, string filter ) {            
             return Search(scope, filter, this._attributeMap);
         }
-       
-         public virtual IList<TEntity> Search(int scope, string filter, IDictionary<string, KeyValuePair<string, MethodInfo>> map ) {
+
+        public virtual IList<TEntity> Search(int scope, string filter, IDictionary<string, KeyValuePair<string, MethodInfo>> map ) {
+            return Search(_configuration.SearchBase, scope, filter, map);
+        }
+
+         /// Summary:
+         ///    Searches LDAP for filter, using scope. Returned LDAP Entries are converted to 
+         ///    TEntity according to map given          
+        
+         public virtual IList<TEntity> Search(string searchbase, int scope, string filter, IDictionary<string, KeyValuePair<string, MethodInfo>> map ) {
 
             if (map == null) throw new ArgumentNullException();
 
@@ -263,7 +284,7 @@ namespace ASTV.Services {
                      LdapSearchConstraints lsconstr = new LdapSearchConstraints();
                      lsconstr.MaxResults = 1000; // Actual limit imposed by LDAP server.  
                      
-                     LdapSearchResults lsc=ldapConnection.Search(	_configuration.SearchBase,
+                     LdapSearchResults lsc=ldapConnection.Search(	searchbase,
 												scope,
 												filter,
 												attrs,
