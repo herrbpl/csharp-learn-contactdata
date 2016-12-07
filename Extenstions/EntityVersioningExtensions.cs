@@ -18,6 +18,7 @@ using System.Data.SqlTypes;
 using System.Data.SqlClient;
 
 using ASTV.Models.Generic;
+using ASTV.Helpers;
 
 namespace ASTV.Extenstions {
     public class VersionInfo {
@@ -89,48 +90,18 @@ namespace ASTV.Extenstions {
         internal static readonly MethodInfo PropertyMethod
             = typeof(EF).GetTypeInfo().GetDeclaredMethod(nameof(Property));
         
-        public static string ListObject(object O) {
-            string info = "";
+        
 
-            Type t = O.GetType();
-            info += "Type: "+t.FullName;
-            info += "Members:\n";
-            if (O is string) {
-                info += "Value: '"+(string)O+"'\n";
-            } else {
-            foreach( var s in t.GetProperties()) {
-                info += s.Name + ":"; //+s.GetType().FullName;
-                if (s.GetType().FullName == "System.Reflection.RuntimePropertyInfo") {
-                    
-                    try {
-                        info += ":"+s.PropertyType.FullName;
-                        var oo = s.GetValue(O, null);
-                        if (oo == null) {
-                            info += "= (null)";
-                        } else {
-                            info += "= "+oo.ToString();
-                        }
-                    } catch (Exception e) {
-                        info += "Exception: "+e.Message;
-                    }
-                }
-                info += "\n";
-            }
-            }
-
-            return info;
-        }
-
+        /// <summary>
+        /// Returns keys that are related to Versioning
+        /// </summary>
         public static IKey GetVersionKeys<TEntity>(this DbSet<TEntity> set) where TEntity : class
         {
             var context =  set.GetService<IDbContextServices>().CurrentContext.Context; 
-            var entityType = context.Model.FindEntityType(typeof(TEntity));
-            
-            //var pk = entityType.FindPrimaryKey();
+            var entityType = context.Model.FindEntityType(typeof(TEntity));                        
             var keys = entityType.GetKeys();
             foreach(var key in keys) {
-                if (key.Properties.Where(m => m.Name == "Version").Count() > 0) {
-                    //Console.WriteLine("AK FOUND: '{0}': {1}", key.SqlServer().Name, key.Properties.Select(m => m.Name).ToArray().Join(", "));
+                if (key.Properties.Where(m => m.Name == "Version").Count() > 0) {                    
                     return key;
                 }                
             }
@@ -138,6 +109,9 @@ namespace ASTV.Extenstions {
         }
 
 
+        /// <summary>
+        /// Returns maximum version number for given entity
+        /// </summary>
         public static int MaxVersion<TEntity>(this DbSet<TEntity> set, TEntity entity) where TEntity : class {
             try {
 
@@ -149,15 +123,20 @@ namespace ASTV.Extenstions {
 
         }
 
-         public static TEntity GetVersion<TEntity>(this DbSet<TEntity> set, TEntity entity, int version) where TEntity : class {
+        /// <summary>
+        /// Returns specific version of entity. If version is not found, null is returned
+        /// </summary>
+        public static TEntity GetVersion<TEntity>(this DbSet<TEntity> set, TEntity entity, int version) where TEntity : class {
 
             if (entity == null ) throw new ArgumentNullException();               
             var x = set.Versions(entity).
                 Where( m => EF.Property<int>(m, "Version") == version).FirstOrDefault();                              
             return x;
-         }
+        }
 
-         // change to DbSet based
+        /// <summary>
+        /// Returns latest version of given entity
+        /// </summary>
         public static TEntity Latest<TEntity>(this IQueryable<TEntity> source, TEntity entity) where TEntity : class {
             if (typeof(DbSet<TEntity>).IsAssignableFrom(source.GetType())) {
                 var set = (DbSet<TEntity>)source;    
@@ -169,8 +148,37 @@ namespace ASTV.Extenstions {
         }
 
         
-        
+        /// <summary>
+        /// Returns all versions of given entity
+        /// </summary>
 
+        public static IQueryable<TEntity> Versions<TEntity>(this IQueryable<TEntity> source,  TEntity entity) where TEntity : class
+        {            
+            if (entity == null ) throw new ArgumentNullException();
+            
+            if (typeof(DbSet<TEntity>).IsAssignableFrom(source.GetType())) {
+                var set = (DbSet<TEntity>)source;                
+                var exp = BuildVersionQueryPredicate<TEntity>(set, entity);            
+                var context =  set.GetService<IDbContextServices>().CurrentContext.Context;              
+                return set.Where(exp);
+            } 
+            return source;
+        }
+
+        // should check this out
+        // https://github.com/aspnet/EntityFramework/blob/f9adcb64fdf668163377beb14251e67d17f60fa0/src/Microsoft.EntityFrameworkCore/Internal/EntityFinder.cs
+       
+        public static MethodCallExpression BuildCallExpression<TEntity>( ParameterExpression parameter, string propertyName, Type propertyType) {
+            return Expression.Call(
+                                PropertyMethod.MakeGenericMethod(propertyType)
+                                , parameter
+                                , Expression.Constant(propertyName, typeof(string))
+                            );
+        }
+        
+        /// <summary>
+        /// Returns predicate expression to find all versions for given entity.
+        /// </summary>
         public static Expression<Func<TEntity, bool>> BuildVersionQueryPredicate<TEntity>(this DbSet<TEntity> set, TEntity entity) where TEntity : class
         {   
             if (entity == null ) throw new ArgumentNullException();
@@ -178,7 +186,6 @@ namespace ASTV.Extenstions {
             if (vk == null) throw new ArgumentException("Version keys are not defined for set");
 
             var vvk = vk.Properties.Where(p => p.Name != "Version").ToList();
-
 
             BinaryExpression exbody = null;
             ParameterExpression parameter = Expression.Parameter(typeof(TEntity), "x");
@@ -213,8 +220,6 @@ namespace ASTV.Extenstions {
             return exp;
         }
 
-
-
         
         public static void GetChangeTrackerPredicate<TEntity>(this DbContext context, TEntity entity) where TEntity : class 
         {
@@ -229,13 +234,13 @@ namespace ASTV.Extenstions {
 
             var mi2 = mi1(entry);
 
-            Console.WriteLine("MI2 \n{0}\n/MI2", mi2 != null? ListObject(mi2): "(null)");
+            Console.WriteLine("MI2 \n{0}\n/MI2", mi2 != null? DebugHelpers.ListObject(mi2): "(null)");
 
             var Ni1 = GetFunc2<TEntity>();
 
             var Ni2 = Ni1(entry);
 
-            Console.WriteLine("NI2 \n{0}\n/NI2", Ni2 != null? ListObject(Ni2): "(null)");
+            Console.WriteLine("NI2 \n{0}\n/NI2", Ni2 != null? DebugHelpers.ListObject(Ni2): "(null)");
 
             
             
@@ -248,6 +253,7 @@ namespace ASTV.Extenstions {
 
             // get key values for entity            
             var vb = context.GetVersionKeyValues(entity);
+            
             var predicate = BuildPredicate(properties, vb, parameter);
             
             var lambda = Expression.Lambda(predicate, parameter) as Expression<Func<EntityEntry<TEntity>, bool>>;
@@ -391,34 +397,6 @@ namespace ASTV.Extenstions {
         }
 
        
-        // TODO: might have to change this to method of DbSet, not queryable..
-
-        public static IQueryable<TEntity> Versions<TEntity>(this IQueryable<TEntity> source,  TEntity entity) where TEntity : class
-        {            
-            if (entity == null ) throw new ArgumentNullException();
-            //-ValueBuffer
-            if (typeof(DbSet<TEntity>).IsAssignableFrom(source.GetType())) {
-                var set = (DbSet<TEntity>)source;                
-                var exp = BuildVersionQueryPredicate<TEntity>(set, entity);
-                //return set.AsNoTracking().Where(exp);
-                var context =  set.GetService<IDbContextServices>().CurrentContext.Context; 
-                //Expression<Func<EntityEntry<TEntity>, bool>> 
-                //context.ChangeTracker.Entries<TEntity>().Where(p => p.Property<int>("ss").CurrentValue == 1) 
-                return set.Where(exp);
-            } 
-            return source;
-        }
-
-        // should check this out
-        // https://github.com/aspnet/EntityFramework/blob/f9adcb64fdf668163377beb14251e67d17f60fa0/src/Microsoft.EntityFrameworkCore/Internal/EntityFinder.cs
-       
-        public static MethodCallExpression BuildCallExpression<TEntity>( ParameterExpression parameter, string propertyName, Type propertyType) {
-            return Expression.Call(
-                                PropertyMethod.MakeGenericMethod(propertyType)
-                                , parameter
-                                , Expression.Constant(propertyName, typeof(string))
-                            );
-        }
 
 
 
@@ -455,10 +433,7 @@ namespace ASTV.Extenstions {
         }
 
         // gets value of employeeid
-        public  static Func<EntityEntry<TEntity>, 
-            //PropertyEntry<TEntity, string>
-            string
-        > GetFunc2<TEntity>() where TEntity : class {
+        public  static Func<EntityEntry<TEntity>, string> GetFunc2<TEntity>() where TEntity : class {
             var sourceParameter = Expression.Parameter(typeof(EntityEntry<TEntity>), "source");            
             
             var str = new Type[] { typeof(string) };
@@ -484,12 +459,9 @@ namespace ASTV.Extenstions {
         }
 
 
-        public  static Func<EntityEntry<TEntity>, 
-            PropertyEntry<TEntity, string>
-        > GetFunc<TEntity>() where TEntity : class {
+        public  static Func<EntityEntry<TEntity>, PropertyEntry<TEntity, string>> GetFunc<TEntity>() where TEntity : class {
             var sourceParameter = Expression.Parameter(typeof(EntityEntry<TEntity>), "source");
-            // get     // EntityEntry<TEntity> x.Property<propertytype>("propertyname").CurrentValue
-            
+                        
             var str = new Type[] { typeof(string) };
             
             var lambda = Expression.Lambda<Func<EntityEntry<TEntity>,  PropertyEntry<TEntity, string>>>(
