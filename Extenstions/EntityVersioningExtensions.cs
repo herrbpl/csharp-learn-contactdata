@@ -31,7 +31,7 @@ namespace ASTV.Extenstions {
 
     }
     public static class EntityVersioningExtensions {               
-
+        
         public static void AddVersioningAttributes(this DbContext context, ModelBuilder modelBuilder) {
             // Versioning information. Need to create index on previous key and version number?
             // TODO: save original key to context cache?
@@ -223,9 +223,14 @@ namespace ASTV.Extenstions {
         
         public static void GetChangeTrackerPredicate<TEntity>(this DbContext context, TEntity entity) where TEntity : class 
         {
-            var xx = context.VersionKeyFunction<TEntity>();
-            var pred = xx().Compile();
-            Console.WriteLine("XCNXX: {0}", context.ChangeTracker.Entries<TEntity>().Where(t => pred(t, entity)).Count());
+            //var xx = context.VersionKeyFunction<TEntity>();
+            //var pred = xx().Compile();
+            
+            var values = context.ChangeTracker.Entries<TEntity>().Where(t => t.EntityVersions<TEntity>()(t,entity)).AsEnumerable();
+            foreach(var val in values) {
+                Console.WriteLine("VAL is: {0}", val.Property<string>("EmployeeId").CurrentValue);    
+            }
+            
             if (entity == null ) throw new ArgumentNullException();
             var set = context.Set<TEntity>();
             var entityType = context.Model.FindEntityType(typeof(TEntity));
@@ -387,6 +392,30 @@ namespace ASTV.Extenstions {
         }
 
         // ================================================================================
+
+        /// <summary>
+        /// Stores cache of compiled functions
+        /// </summary>
+        /// <returns></returns>
+        internal static IDictionary<Type, object> _ChangeTrackerFinderCache = new Dictionary<Type, object>();
+
+
+        public static Func< EntityEntry<TEntity>, TEntity, bool> EntityVersions<TEntity>(this EntityEntry<TEntity> entry) 
+            where TEntity : class 
+        {
+            Func< EntityEntry<TEntity>, TEntity, bool> f;
+            if (_ChangeTrackerFinderCache.ContainsKey(typeof(TEntity))) {
+                f = (Func< EntityEntry<TEntity>, TEntity, bool>)_ChangeTrackerFinderCache[typeof(TEntity)];
+                Console.WriteLine("Cache hit");
+            } else {
+                f = entry.Context.VersionKeyFunction<TEntity>()().Compile();                
+                _ChangeTrackerFinderCache.Add(typeof(TEntity),f);
+                Console.WriteLine("Compiled instance");
+            }
+            
+            return f;
+        }
+
         /// <summary>
         /// Returns function(TEntity) which returns expression to search version keys
         /// </summary>
@@ -477,38 +506,6 @@ namespace ASTV.Extenstions {
             var ll =  Expression.Lambda(xc,null);
             Console.WriteLine("Lambda is: '{0}'", ll.ToString());
             return (Func< Expression< Func< EntityEntry<TEntity>, TEntity, bool>>>) ll.Compile();
-/*
-
-            // create lambda with two parameters
-            var c = Expression.Constant(true, typeof(System.Boolean));
-            IList<ParameterExpression> paramss = new List<ParameterExpression>();
-
-            paramss.Add(entityParameter );
-            paramss.Add(entityEntryParameter);
-            var exp = Expression.Lambda(c,paramss);
-            Console.WriteLine("FLambda \n{0}\n/FLambda", exp.ToString());
-
-            IList<ParameterExpression> paramss2 = new List<ParameterExpression>();
-
-            paramss2.Add(entityEntryParameter );
-            //paramss.Add(entityEntryParameter);
-            Expression< Func< EntityEntry<TEntity>, bool>> exp1 = ( Expression< Func< EntityEntry<TEntity>, bool>>)Expression.Lambda(c, paramss2);
-            
-            Console.WriteLine("EXP1FLambda \n{0}\n/FLambda", exp1.ToString());
-
-            var xc = Expression.Constant(exp1, typeof(Expression< Func< EntityEntry<TEntity>, bool>>));
-            Console.WriteLine("FLambda \n{0}\n/FLambda", exp1.ToString());
-            var vv = Expression.Variable(typeof(Expression< Func< EntityEntry<TEntity>, bool>>));            
-            var exp2 = Expression.Assign(vv, xc);
-            
-
-
-
-            Console.WriteLine("FLambda \n{0}\n/FLambda", vv.ToString());
-            Console.WriteLine("FLambda \n{0}\n/FLambda", exp2.ToString());
-*/
-            // return Expression< Func< EntityEntry<TEntity>, bool>>
-           // return null;
         }
 
 
