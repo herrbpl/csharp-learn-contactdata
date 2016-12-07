@@ -224,6 +224,8 @@ namespace ASTV.Extenstions {
         public static void GetChangeTrackerPredicate<TEntity>(this DbContext context, TEntity entity) where TEntity : class 
         {
             var xx = context.VersionKeyFunction<TEntity>();
+            var pred = xx().Compile();
+            Console.WriteLine("XCNXX: {0}", context.ChangeTracker.Entries<TEntity>().Where(t => pred(t, entity)).Count());
             if (entity == null ) throw new ArgumentNullException();
             var set = context.Set<TEntity>();
             var entityType = context.Model.FindEntityType(typeof(TEntity));
@@ -472,9 +474,9 @@ namespace ASTV.Extenstions {
             Expression< Func< EntityEntry<TEntity>, TEntity, bool>> exp = ( Expression< Func< EntityEntry<TEntity>, TEntity, bool>>) Expression.Lambda(predicate,parameters);
             Console.WriteLine("Lambda is: '{0}'", exp.ToString());
             var xc = Expression.Constant(exp, typeof(Expression< Func< EntityEntry<TEntity>, TEntity, bool>>));
-            var ll = Expression.Lambda(exp,null);
+            var ll =  Expression.Lambda(xc,null);
             Console.WriteLine("Lambda is: '{0}'", ll.ToString());
-            return ll.Compile() as Func< Expression< Func< EntityEntry<TEntity>, TEntity, bool>>>;
+            return (Func< Expression< Func< EntityEntry<TEntity>, TEntity, bool>>>) ll.Compile();
 /*
 
             // create lambda with two parameters
