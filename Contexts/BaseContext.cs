@@ -70,7 +70,8 @@ namespace ASTV.Services {
             
             
                 this.GetChangeTrackerPredicate(entity);
-            
+                
+                
             
                 VersionInfo x = GetVersionInfo<TEntity>(entity);
                 var entityType = Model.FindEntityType(typeof(TEntity));

@@ -223,7 +223,7 @@ namespace ASTV.Extenstions {
         
         public static void GetChangeTrackerPredicate<TEntity>(this DbContext context, TEntity entity) where TEntity : class 
         {
-            
+            var xx = context.VersionKeyFunction<TEntity>();
             if (entity == null ) throw new ArgumentNullException();
             var set = context.Set<TEntity>();
             var entityType = context.Model.FindEntityType(typeof(TEntity));
@@ -258,7 +258,9 @@ namespace ASTV.Extenstions {
             
             var lambda = Expression.Lambda(predicate, parameter) as Expression<Func<EntityEntry<TEntity>, bool>>;
             Console.WriteLine("Lambda {0}", lambda);
+            
             IQueryable<EntityEntry<TEntity>> ccc = context.ChangeTracker.Entries<TEntity>().AsQueryable();
+
             string xs = ccc.Where(t => t.Property<string>("EmployeeId").CurrentValue == "0203").ToList().Select(m =>  
                 m.Property<int>("Version").CurrentValue.ToString() + " " + m.Property<string>("EmployeeId").CurrentValue ).
                 ToList().Join(" \n");
@@ -382,11 +384,134 @@ namespace ASTV.Extenstions {
             return predicate;
         }
 
-       
+        // ================================================================================
+        /// <summary>
+        /// Returns function(TEntity) which returns expression to search version keys
+        /// </summary>
+        public static Func< Expression< Func< EntityEntry<TEntity>, TEntity, bool>>> VersionKeyFunction<TEntity>(this DbContext context) where TEntity : class {
+            // return parameter 
+            var entityEntryParameter = Expression.Parameter(typeof(EntityEntry<TEntity>), "x");
+            // entity searched for
+            var entityParameter = Expression.Parameter(typeof(TEntity), "y"); 
+            // return type
+            var returnType = typeof(Expression< Func< EntityEntry<TEntity>, TEntity, bool>>);
 
+            Type propertyParameterType = typeof(PropertyEntry<,>);
+
+            // Signature to find correct property method 
+            var methodSignature = new Type[] { typeof(string) };
+
+            // Method info which helps to invoke 
+            MethodInfo propertyMethodInfo= typeof(EntityEntry<>)
+                        .MakeGenericType(entityEntryParameter.Type.GenericTypeArguments[0])  // resolves to EntityEntry<TEntity>
+                        .GetMethod("Property", methodSignature);  // resolves to EntityEntry<TEntity>.Property<Propertytype>(string propertyName);            
+
+            // TEntity information, keys.
+            var set = context.Set<TEntity>();
+            var entityType = context.Model.FindEntityType(typeof(TEntity));
+            var vk = set.GetVersionKeys();
+            if (vk == null) throw new ArgumentException("Version keys are not defined for set");
+            var properties  = vk.Properties.Where(p => p.Name != "Version").ToList();
+
+            
+            Console.WriteLine("Entity type name: {0} '{1}'", entityType.Name, entityType.ClrType.FullName);
+            
+            // accessor to entityParameter property N
+            IList<MemberExpression> pl = new List<MemberExpression>();
+
+            BinaryExpression predicate = null;
+
+            foreach( var prop in properties ) {
+                Console.WriteLine("Prop name: {0}", prop.Name);
+                // find property accessor
+                // Tentity.property. There *should* not be any properties with multiple types..
+                var pi = typeof(TEntity).GetProperty(prop.Name);
+                Console.WriteLine(pi.GetGetMethod().Name);
+                var me = Expression.Property( entityParameter, pi.GetGetMethod());
+                pl.Add(me);
+
+
+                // create type of PropertyType<TEntity, property.ClrType>
+                var propertyEntryType = propertyParameterType.MakeGenericType(
+                    new Type[] {
+                        entityEntryParameter.Type.GenericTypeArguments[0]  
+                        , pi.PropertyType
+                    }
+                );
+
+                var currentValuePropertyInfo = propertyEntryType.GetProperty("CurrentValue", pi.PropertyType);
+
+
+                var equalsExpression =
+                    Expression.Equal( // start of one expression
+                        Expression.Property( // get property of PropertyEntity
+
+                            Expression.Call( // Calling for x.Property<propertype>(propertyname)                             
+                                entityEntryParameter, // typeof(EntityEntry<TEntity>)
+                                propertyMethodInfo.MakeGenericMethod(prop.ClrType),                            
+                                Expression.Constant(prop.Name, typeof(string))
+                                )                                                                                               
+                            , currentValuePropertyInfo  // Calling for x.Property<propertype>(propertyname).CurrentValue                     
+                        )                                                    
+                        ,    
+                        //Expression.Constant(keyValues[i],typeof(string)) // value of tentity.propertyname
+                        me
+                    ); // end of one expression
+                if (predicate == null)  {
+                    predicate = equalsExpression;
+                } else {
+                    predicate = Expression.AndAlso(predicate, equalsExpression);
+                }      
+            }
+            Console.WriteLine("Predicate is: '{0}'", predicate.ToString());
+            IList<ParameterExpression> parameters = new List<ParameterExpression>();
+            parameters.Add(entityEntryParameter);
+            parameters.Add(entityParameter );
+            
+
+            Expression< Func< EntityEntry<TEntity>, TEntity, bool>> exp = ( Expression< Func< EntityEntry<TEntity>, TEntity, bool>>) Expression.Lambda(predicate,parameters);
+            Console.WriteLine("Lambda is: '{0}'", exp.ToString());
+            var xc = Expression.Constant(exp, typeof(Expression< Func< EntityEntry<TEntity>, TEntity, bool>>));
+            var ll = Expression.Lambda(exp,null);
+            Console.WriteLine("Lambda is: '{0}'", ll.ToString());
+            return ll.Compile() as Func< Expression< Func< EntityEntry<TEntity>, TEntity, bool>>>;
+/*
+
+            // create lambda with two parameters
+            var c = Expression.Constant(true, typeof(System.Boolean));
+            IList<ParameterExpression> paramss = new List<ParameterExpression>();
+
+            paramss.Add(entityParameter );
+            paramss.Add(entityEntryParameter);
+            var exp = Expression.Lambda(c,paramss);
+            Console.WriteLine("FLambda \n{0}\n/FLambda", exp.ToString());
+
+            IList<ParameterExpression> paramss2 = new List<ParameterExpression>();
+
+            paramss2.Add(entityEntryParameter );
+            //paramss.Add(entityEntryParameter);
+            Expression< Func< EntityEntry<TEntity>, bool>> exp1 = ( Expression< Func< EntityEntry<TEntity>, bool>>)Expression.Lambda(c, paramss2);
+            
+            Console.WriteLine("EXP1FLambda \n{0}\n/FLambda", exp1.ToString());
+
+            var xc = Expression.Constant(exp1, typeof(Expression< Func< EntityEntry<TEntity>, bool>>));
+            Console.WriteLine("FLambda \n{0}\n/FLambda", exp1.ToString());
+            var vv = Expression.Variable(typeof(Expression< Func< EntityEntry<TEntity>, bool>>));            
+            var exp2 = Expression.Assign(vv, xc);
+            
+
+
+
+            Console.WriteLine("FLambda \n{0}\n/FLambda", vv.ToString());
+            Console.WriteLine("FLambda \n{0}\n/FLambda", exp2.ToString());
+*/
+            // return Expression< Func< EntityEntry<TEntity>, bool>>
+           // return null;
+        }
 
 
         
+        // ================================================================================
 
         public static void printChangeTracker<TEntity>(this DbContext context, string tracing) where TEntity : class {
             Console.WriteLine("[{0}] ChangeTracker has {1} entries", tracing, context.ChangeTracker.Entries<TEntity>().Count());
