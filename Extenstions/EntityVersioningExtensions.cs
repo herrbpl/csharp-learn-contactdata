@@ -228,7 +228,7 @@ namespace ASTV.Extenstions {
             var set = context.Set<TEntity>();
             var entityType = context.Model.FindEntityType(typeof(TEntity));
             // EntityEntry<TEntity> x.Property<propertytype>("propertyname").CurrentValue
-            var entry = context.Entry<TEntity>(entity);
+           /* var entry = context.Entry<TEntity>(entity);
 
             var mi1 = GetFunc<TEntity>();
 
@@ -241,7 +241,7 @@ namespace ASTV.Extenstions {
             var Ni2 = Ni1(entry);
 
             Console.WriteLine("NI2 \n{0}\n/NI2", Ni2 != null? DebugHelpers.ListObject(Ni2): "(null)");
-
+            */
             
             
             var vk = set.GetVersionKeys();
@@ -253,7 +253,7 @@ namespace ASTV.Extenstions {
 
             // get key values for entity            
             var vb = context.GetVersionKeyValues(entity);
-            
+
             var predicate = BuildPredicate(properties, vb, parameter);
             
             var lambda = Expression.Lambda(predicate, parameter) as Expression<Func<EntityEntry<TEntity>, bool>>;
@@ -321,76 +321,62 @@ namespace ASTV.Extenstions {
             ParameterExpression entityParameter            
             )
         {   
+            // entityParameter is   Expression.Parameter(typeof(EntityEntry<TEntity>), "x");
+            // should i be looking for func func<TEntity, Expression<Func<EntityEntry<TEntity>, bool>>> ?
+            // Object type for PropertyEntry which will be returned when ChangeTracker.Entries<TEntity>() is called            
+            Type propertyParameterType = typeof(PropertyEntry<,>);
             
-            Type tt = typeof(PropertyEntry<,>);
-            
+            // Values that make up key.
             var keyValuesConstant = Expression.Constant(keyValues);                                    
-                        
-            var str = new Type[] { typeof(string) };
-
-            MethodInfo xxz = null;
-            //entityParameter.Type.
-            var xxz2= typeof(EntityEntry<>).MakeGenericType(entityParameter.Type.GenericTypeArguments[0]).GetMethod("Property", str);
-
-            foreach(var mm in 
-                    entityParameter.Type.GetMethods().Where(m => m.Name=="Property").
-                    Where(
-                            m => m.GetParameters().Where(
-                                    p =>  p.Name == "propertyName" && p.ParameterType == typeof(string)  
-                                    )
-                                    .FirstOrDefault() != null && m.IsGenericMethod == true
-                    )) {
             
-                xxz = mm;                
-            }
+            // Signature to find correct property method 
+            var methodSignature = new Type[] { typeof(string) };
+
+            // Method info which helps to invoke 
+            MethodInfo propertyMethodInfo= typeof(EntityEntry<>)
+                        .MakeGenericType(entityParameter.Type.GenericTypeArguments[0])  // resolves to EntityEntry<TEntity>
+                        .GetMethod("Property", methodSignature);  // resolves to EntityEntry<TEntity>.Property<Propertytype>(string propertyName);
             
             
             BinaryExpression predicate = null;
+
+            // Build predicate expression on given key properties.            
             for (var i = 0; i < keyProperties.Count; i++)
             {
                 var property = keyProperties[i];                
                 
-                var ttt = tt.MakeGenericType(
+                // create type of PropertyType<TEntity, property.ClrType>
+                var propertyEntryType = propertyParameterType.MakeGenericType(
                     new Type[] {
-                        entityParameter.Type.GenericTypeArguments[0]
+                        entityParameter.Type.GenericTypeArguments[0]  
                         , property.ClrType
                     }
                 );
 
-
-                var mmm = ttt.GetProperty("CurrentValue", typeof(string));
-                /*.MakeGenericMethod(  new Type[] {
-                                entityParameter.Type.GenericTypeArguments[0]
-                                , property.ClrType
-                            })
+                // property that contains value to be compared against     
+                // that is EntityEntry<TEntity>(entity).Property<propertytype>(propertyName).CurrentValue     
+                var currentValuePropertyInfo = propertyEntryType.GetProperty("CurrentValue", property.ClrType);
                 
-                */;
-                
+                // build equation
                 var equalsExpression =
-                    Expression.Equal(
+                    Expression.Equal( // start of one expression
                         Expression.Property( // get property of PropertyEntity
 
-                        Expression.Call( // Calling for x.Property<propertype>(propertyname)                             
-                            entityParameter,
-                            xxz2.MakeGenericMethod(property.ClrType),
-                            //PropertyMethod2.MakeGenericMethod(property.ClrType),
-                            Expression.Constant(property.Name, typeof(string))
-                            )
-                        //, //tt //entityParameter.Type                                                                         
-                        , mmm
-                        //, "CurrentValue"
-                        )
-                        
-                            
-                            ,    
-                                Expression.Constant(keyValues[i],typeof(string) )
-                            );
+                            Expression.Call( // Calling for x.Property<propertype>(propertyname)                             
+                                entityParameter, // typeof(EntityEntry<TEntity>)
+                                propertyMethodInfo.MakeGenericMethod(property.ClrType),                            
+                                Expression.Constant(property.Name, typeof(string))
+                                )                                                                                               
+                            , currentValuePropertyInfo  // Calling for x.Property<propertype>(propertyname).CurrentValue                     
+                        )                                                    
+                        ,    
+                        Expression.Constant(keyValues[i],typeof(string)) // value of tentity.propertyname
+                    ); // end of one expression
             if (predicate == null)  {
                 predicate = equalsExpression;
             } else {
-                predicate = Expression.And(predicate, equalsExpression);
-            }
-                //predicate = predicate == null ? equalsExpression : Expression.AndAlso(predicate, equalsExpression);
+                predicate = Expression.AndAlso(predicate, equalsExpression);
+            }                
             }
             
             return predicate;
