@@ -73,10 +73,16 @@ namespace ASTV.Services {
                 
                 
             
-                VersionInfo x = GetVersionInfo<TEntity>(entity);
+              //  VersionInfo x = GetVersionInfo<TEntity>(entity);
                 var entityType = Model.FindEntityType(typeof(TEntity));
                 
                 var previous = Set<TEntity>().Latest(entity);
+                var prevE = this.ChangeTracker.Entries<TEntity>().AsQueryable().Latest(entity);
+                if (prevE != null) {
+                    Console.WriteLine("HAHAHA FOUND IT! {0}", prevE.Property<int>("Version"));
+                }
+                var vv = this.ChangeTracker.Entries<TEntity>().AsQueryable().Versions(entity).ToList();
+                Console.WriteLine("VV is {0}", vv.Count());
                 // If entity with same key is given and is 
                 int version = 0;
                 
