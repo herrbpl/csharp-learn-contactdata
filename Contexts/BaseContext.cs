@@ -38,29 +38,6 @@ namespace ASTV.Services {
             base.OnModelCreating(modelBuilder);
         }
 
-
-        public virtual VersionInfo GetVersionInfo<TEntity>(TEntity entity)  where TEntity : class {
-            VersionInfo vi;            
-            var vil = this.Set<TEntity>().Versions(entity).Select( m => 
-                    new VersionInfo { 
-                            IsCurrent = EF.Property<Boolean>(m, "IsCurrent"), 
-                            ChangeId = EF.Property<int>(m, "ChangeId"),
-                            Version = EF.Property<int>(m, "Version")
-                            
-                            } ).ToList();
-                                 
-            if (vil.Count == 0) {
-                vi = new VersionInfo();
-            }  else {
-                vi = vil.Aggregate(
-                                (v1, v2) => v1.Version > v2.Version ? v1 : v2
-                            );
-            }
-            return vi;
-        }
-
-        
-
         
         public override EntityEntry<TEntity> Add<TEntity>(TEntity entity)
         {

@@ -21,15 +21,7 @@ using ASTV.Models.Generic;
 using ASTV.Helpers;
 
 namespace ASTV.Extenstions {
-    public class VersionInfo {
-        public int ChangeId { get; set; }
-        public DateTime ValidFrom { get; set; }
-        public DateTime ValidUntil { get; set; }
-        public Boolean IsCurrent { get; set; }
-        public Boolean IsDeleted { get; set; }
-        public int Version { get; set; }
-
-    }
+    
     public static class EntityVersioningExtensions {               
         
         public static void AddVersioningAttributes(this DbContext context, ModelBuilder modelBuilder) {
