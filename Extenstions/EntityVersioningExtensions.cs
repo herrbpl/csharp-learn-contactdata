@@ -353,15 +353,16 @@ namespace ASTV.Extenstions {
         /// Returns maximum version number for given entity
         /// </summary>
         public static int MaxVersion<TEntity>(this IQueryable<EntityEntry<TEntity>> source, TEntity entity) where TEntity : class {
-            try {
+        //    try {
                 var l = source.Versions(entity).ToList();               
+
                 return source.Versions(entity).Select( 
                             m => m.Property<int>("Version").CurrentValue ).Max();
-                
+          /*      
             } catch (Exception e) {
                 return 0;
             }
-
+            */
         }
 
         /// <summary>
@@ -429,12 +430,15 @@ namespace ASTV.Extenstions {
         public static IQueryable<EntityEntry<TEntity>> Versions<TEntity>(this IQueryable<EntityEntry<TEntity>> source, TEntity entity) where TEntity : class
         {
             if (entity == null ) throw new ArgumentNullException();
-            if (typeof(EntityEntry<TEntity>).IsAssignableFrom(source.GetType())) {
-                var set = (EntityEntry<TEntity>)source;                
-                var pred = set.EntityVersions();              
-                return source.Where(t => pred(t, entity));
-            } 
-            return source;
+            var tt = source.ElementType; // How to get entry ? or context?
+            var o = source.FirstOrDefault();
+
+            var set = o;       
+            if (set == null ) { Console.WriteLine("Set is null!");}         
+            var pred = set.EntityVersions();              
+            if (pred == null ) { Console.WriteLine("PRED is null!");}
+            return source.Where(t => pred(t, entity));
+
         }
 
 
@@ -511,8 +515,12 @@ namespace ASTV.Extenstions {
         {
             Func< EntityEntry<TEntity>, TEntity, bool> f;
             if (_ChangeTrackerFinderCache.ContainsKey(typeof(TEntity))) {
+                Console.WriteLine("HERE2");
                 f = (Func< EntityEntry<TEntity>, TEntity, bool>)_ChangeTrackerFinderCache[typeof(TEntity)];                
             } else {
+                var ll = entry.Context.VersionKeyFunction<TEntity>()();
+                Console.WriteLine("HERE");
+                Console.WriteLine("Lambda to be used: {0}",ll.ToString());
                 f = entry.Context.VersionKeyFunction<TEntity>()().Compile();                
                 _ChangeTrackerFinderCache.Add(typeof(TEntity),f);                
             }
