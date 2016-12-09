@@ -42,10 +42,23 @@ namespace ASTV.Services {
         public override EntityEntry<TEntity> Add<TEntity>(TEntity entity)
         {           
             var entry = this.AddEntityVersion(entity);
-            entry = base.Add(entity);                                                                
+           // entry = base.Add(entity);                                                                
             return entry;
         }
 
+        public override EntityEntry<TEntity> Update<TEntity>(TEntity entity)
+        {                                  
+            var entry = this.UpdateEntityVersion(entity);                                                                         
+            return entry;
+        }
+
+        public override EntityEntry<TEntity> Remove<TEntity>(TEntity entity)
+        {   
+           
+            var entry = this.RemoveEntityVersion(entity);                                                                         
+            return entry;
+        }
+        
 
         public override int SaveChanges()
         {            
