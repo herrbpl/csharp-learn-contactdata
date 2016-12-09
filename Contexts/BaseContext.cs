@@ -41,25 +41,14 @@ namespace ASTV.Services {
         
         public override EntityEntry<TEntity> Add<TEntity>(TEntity entity)
         {
-           
+           /*
             if (typeof(IEntityVersioning).IsAssignableFrom(entity.GetType())) {
 
-            
-            
-                this.GetChangeTrackerPredicate(entity);
-                
-                
-            
               //  VersionInfo x = GetVersionInfo<TEntity>(entity);
                 var entityType = Model.FindEntityType(typeof(TEntity));
                 
-                var previous = Set<TEntity>().Latest(entity);
-                var prevE = this.ChangeTracker.Entries<TEntity>().AsQueryable().Latest(entity);
-                if (prevE != null) {
-                    Console.WriteLine("HAHAHA FOUND IT! {0}", prevE.Property<int>("Version"));
-                }
-                var vv = this.ChangeTracker.Entries<TEntity>().AsQueryable().Versions(entity).ToList();
-                Console.WriteLine("VV is {0}", vv.Count());
+                var previous = Set<TEntity>().Latest(entity);                
+                
                 // If entity with same key is given and is 
                 int version = 0;
                 
@@ -83,13 +72,13 @@ namespace ASTV.Services {
                 Entry(entity).Property<DateTime>("ValidUntil").CurrentValue = DateTime.MaxValue;
                 Entry(entity).Property<Boolean>("IsCurrent").CurrentValue = true;
             }
-            
-            var entry = base.Add(entity);
+            */
+            var entry = this.AddEntityVersion(entity);
+            entry = base.Add(entity);
             
             // Temporary fix, actually should get max version from change tracker.
             // To get that, need to build predicate for that. Its PITA     
-            this.SaveChanges();                              
-            Console.WriteLine("-----------------------------------------------------");
+            //this.SaveChanges();                                         
             return entry;
         }
 

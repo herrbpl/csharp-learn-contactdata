@@ -4,14 +4,19 @@ using System.Linq;
 using System.Linq.Expressions;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 using ASTV.Models.Employee;
 using ASTV.Models.Generic;
+using ASTV.Services;
+
 
 namespace ASTV.Services {
 
-    public interface IContactDataRepository: IEntityBaseRepository<ContactData, ContactDataContext> {}
-    public class ContactDataRepository: EntityBaseRepository<ContactData, ContactDataContext>, IContactDataRepository                               
+    public interface IContactDataRepository: IEntityBaseRepositoryReadonly<ContactData, ContactDataContext> {
+        void Update(ContactData entity);
+    }
+    public class ContactDataRepository: EntityBaseRepositoryReadOnly<ContactData, ContactDataContext>, IContactDataRepository                               
     {
         public ContactDataRepository(ContactDataContext context) : base(context) {            
         }
@@ -46,6 +51,10 @@ namespace ASTV.Services {
             IList<ContactData> a = new List<ContactData>();
             a.Add(cd);
             return a;
+        }
+        
+        public void Update(ContactData entity) {
+            _logger.LogInformation("Update invoked");            
         }
     }
 }    

@@ -22,14 +22,15 @@ using ASTV.Helpers;
 
 namespace ASTV.Extenstions {
     
-    public static class EntityVersioningExtensions {               
+    public static class EntityVersioningExtensions {           
+
+        // TODO: Add versioned entries to separate tables?    
         
         public static void AddVersioningAttributes(this DbContext context, ModelBuilder modelBuilder) {
             // Versioning information. Need to create index on previous key and version number?
             // TODO: save original key to context cache?
+            // TODO: Add support for other defined unique keys 
             
-            //modelBuilder.ForSqlServerHasSequence<int>("DBSequence")
-            //                  .StartsAt(1000).IncrementsBy(2);
 
             foreach (var entityType in modelBuilder.Model.GetEntityTypes()
                 .Where(e => typeof(IEntityVersioning).IsAssignableFrom(e.ClrType)))
@@ -77,6 +78,156 @@ namespace ASTV.Extenstions {
             }
         }
 
+        /// <summary>
+        /// Add versioning data to EntityEntry&lt;TEntity&gt;
+        /// <br/>TODO: Should also add opportunity to differ if change is between saves and if addition changes anything
+        /// TODO: Add current/max version info to change tracker itself and keep it updated to gain performance 
+        /// </summary>
+        public static EntityEntry<TEntity> AddEntityVersion<TEntity>(this DbContext context, TEntity entity) where TEntity : class, new {
+
+            var current = context.Entry(entity);
+            if (!typeof(IEntityVersioning).IsAssignableFrom(entity.GetType())) return current;
+
+            // find previous version of this entity
+            var previous = context.ChangeTracker.Entries<TEntity>().AsQueryable().Latest(entity);
+
+            Console.WriteLine("Entity state: {0}", current.State.ToString());
+
+            // if not attached, add
+            // if updated, copy entity and add to latest
+            // if deleted, copy entity and add to latest, set deleted
+            // if added, check if same entity already exist, add copy if not latest.
+
+            // entity is not yet tracked
+            if (current.State == EntityState.Detached) {
+                
+                int version = 0;
+                // no previous entry found
+                if (previous == null) {
+                    current.Property<int>("Version").CurrentValue = 1;
+                    current.Property<DateTime>("ValidFrom").CurrentValue = DateTime.Now;
+                    current.Property<DateTime>("ValidUntil").CurrentValue = DateTime.MaxValue;
+                    current.Property<Boolean>("IsCurrent").CurrentValue = true;
+                } 
+                // previous entry found
+                else {
+
+                    // get latest version number
+                    version =  previous.Property<int>("Version").CurrentValue;                
+                    previous.Property<DateTime>("ValidUntil").CurrentValue = DateTime.Now;
+                    previous.Property<Boolean>("IsCurrent").CurrentValue = false;
+                    previous.State = EntityState.Modified;
+
+                    // update version number
+                    version++;
+
+                    // update current item (not yet tracked)
+                    current.Property<int>("Version").CurrentValue = version;
+                    current.Property<DateTime>("ValidFrom").CurrentValue = DateTime.Now;
+                    current.Property<DateTime>("ValidUntil").CurrentValue = DateTime.MaxValue;
+                    current.Property<Boolean>("IsCurrent").CurrentValue = true;                                                      
+                }
+            } else if (current.State == EntityState.Added) {
+                // entity has already been added.
+                // no previous entry found 
+                if (previous == null ) {  
+                    // Guess its latest. Do not change version. Update other meta
+                    current.Property<DateTime>("ValidFrom").CurrentValue = DateTime.Now;
+                    current.Property<DateTime>("ValidUntil").CurrentValue = DateTime.MaxValue;
+                    current.Property<Boolean>("IsCurrent").CurrentValue = true;    
+                } 
+                // previous entry found
+                else {
+                    // if previous does not equals to current, add extra copy
+                    if (!previous.Entity.Equals(entity)) {
+                        Console.WriteLine("Previous is not equal to current, adding extra copy");
+
+                        var serialized = entity.Serialize(null);
+                        var newCopy = Newtonsoft.Json.JsonConvert.DeserializeObject<TEntity>(serialized);
+                        
+                        Console.WriteLine("Copied!");
+
+                    } else {
+                        Console.WriteLine("Previous is  equal to current, just setting iscurrent");
+                        current.Property<Boolean>("IsCurrent").CurrentValue = true;
+                    }
+                }
+
+            }
+            
+            Console.WriteLine("Entity state: {0}", current.State.ToString());
+            // if this is not untracked entity, will not fiddle
+            if (current.State != EntityState.Detached) { 
+                return current;
+            }
+
+                        
+            if (typeof(IEntityVersioning).IsAssignableFrom(entity.GetType())) {
+                int version = 0;
+                int dbversion = 0;
+                int ctversion = 0;
+                // should also get latest from DBSet<TEntity> to be sure that we are using latest version no.
+                // for example if nothing has loaded to change tracker.
+                
+                //var previousSet = context.Set<TEntity>().Latest(entity);
+                // TODO: Improve storing and getting latest values performance
+                var previous = context.ChangeTracker.Entries<TEntity>().AsQueryable().Latest(entity);
+                
+                // if no previous
+                if (previous == null) {
+
+                    current.Property<int>("Version").CurrentValue = version;
+                    current.Property<DateTime>("ValidFrom").CurrentValue = DateTime.Now;
+                    current.Property<DateTime>("ValidUntil").CurrentValue = DateTime.MaxValue;
+                    current.Property<Boolean>("IsCurrent").CurrentValue = true;
+
+                } else {
+                    // if entity is already added to change tracker, change no metadata and add no new version
+                    
+                    if (previous.Entity.Equals(entity)) { // if previous is entity (or entity )
+                        Console.WriteLine("Previous == current!");
+                    }
+
+                }
+                /*
+
+                if (previousSet != null) {
+                    dbversion = context.Entry(previousSet).Property<int>("Version").CurrentValue;                                        
+                }
+
+                if (previous != null) {
+                    ctversion =  previous.Property<int>("Version").CurrentValue;
+                }                               
+                */
+                // if ct > db, if db is current, invalidate it and set validity to ct entry with next version after db version
+                // if db > ct latest just create new entry and set db validity. 
+                // if ct == db, just modify it
+
+
+                if (previous != null) {
+
+                    if (previous.Entity.Equals(entity)) {
+                        Console.WriteLine("Previous == current!");
+                    }
+
+                    version =  previous.Property<int>("Version").CurrentValue;                
+                    previous.Property<DateTime>("ValidUntil").CurrentValue = DateTime.Now;
+                    previous.Property<Boolean>("IsCurrent").CurrentValue = false;
+                    previous.State = EntityState.Modified;
+                } 
+                version++;
+
+                current.Property<int>("Version").CurrentValue = version;
+                current.Property<DateTime>("ValidFrom").CurrentValue = DateTime.Now;
+                current.Property<DateTime>("ValidUntil").CurrentValue = DateTime.MaxValue;
+                current.Property<Boolean>("IsCurrent").CurrentValue = true;
+
+            }
+            return current;            
+        }
+
+        // =============================================================================================
+
 
         // https://github.com/aspnet/EntityFramework/blob/3a10927c849002777fc656fba063ffde3f8d3938/src/Microsoft.EntityFrameworkCore/EF.cs 
         internal static readonly MethodInfo PropertyMethod
@@ -120,10 +271,7 @@ namespace ASTV.Extenstions {
         /// </summary>
         public static int MaxVersion<TEntity>(this IQueryable<EntityEntry<TEntity>> source, TEntity entity) where TEntity : class {
             try {
-                var l = source.Versions(entity).ToList();
-                foreach(var m in l) {
-                    Console.WriteLine("Blah: {0}", m.Property<int>("Version").CurrentValue);
-                } 
+                var l = source.Versions(entity).ToList();               
                 return source.Versions(entity).Select( 
                             m => m.Property<int>("Version").CurrentValue ).Max();
                 
@@ -264,18 +412,9 @@ namespace ASTV.Extenstions {
 
 
         
-        
-        public static void GetChangeTrackerPredicate<TEntity>(this DbContext context, TEntity entity) where TEntity : class 
-        {
-            
-            var values = context.ChangeTracker.Entries<TEntity>().Where(t => t.EntityVersions<TEntity>()(t,entity)).AsEnumerable();
-            foreach(var val in values) {
-                Console.WriteLine("VAL is: {0}", val.Property<string>("EmployeeId").CurrentValue);    
-            }                       
-        }
-        
-        
         // ================================================================================
+
+        // All this stuff is so inefficient. Linq is death to performance! 
 
         /// <summary>
         /// Stores cache of compiled functions

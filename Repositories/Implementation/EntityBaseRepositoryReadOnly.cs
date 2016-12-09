@@ -35,8 +35,7 @@ namespace ASTV.Services {
             this._logger = loggerFactory.CreateLogger(this.GetType().Name);
         }
         public virtual IEnumerable<T> GetAll()
-        {                        
-            
+        {                                    
             return _context.Set<T>().ToList();             
         }
         public virtual IEnumerable<T> GetList(Func<T, bool> where, params Expression<Func<T,object>>[] navigationProperties) {

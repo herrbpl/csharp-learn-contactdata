@@ -26,13 +26,11 @@ namespace ASTV.Services {
         }
         */
         protected override void OnModelCreating(ModelBuilder builder)
-        {
-            Console.WriteLine("Adding ContactData info");
+        {            
             builder.Entity<ContactData>().HasKey(p => p.EmployeeId);
             builder.Entity<ContactData>().Property(p => p.Serialized).HasColumnName("Data");
             builder.Entity<ContactData>().Ignore(p => p.ContactLanguage); 
-            builder.Entity<ContactData>().Ignore(p => p.Education);
-            Console.WriteLine("Calling base");
+            builder.Entity<ContactData>().Ignore(p => p.Education);         
             base.OnModelCreating(builder);
 
         }
