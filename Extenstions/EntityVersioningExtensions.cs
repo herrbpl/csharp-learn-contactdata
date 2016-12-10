@@ -128,8 +128,7 @@ namespace ASTV.Extenstions {
                         current.Property<DateTime>("ValidFrom").CurrentValue = DateTime.Now;
                         current.Property<DateTime>("ValidUntil").CurrentValue = DateTime.MaxValue;
                         current.Property<Boolean>("IsCurrent").CurrentValue = true;
-                        current.State = EntityState.Added;
-                        Console.WriteLine("Added!");
+                        current.State = EntityState.Added;                        
                     } 
                     // already tracked but somewhere where it is not latest. 
                     else {
@@ -157,8 +156,7 @@ namespace ASTV.Extenstions {
                     
 
                 } else {                        
-                    current.Property<Boolean>("IsCurrent").CurrentValue = true;
-                    Console.WriteLine("HEREE");
+                    current.Property<Boolean>("IsCurrent").CurrentValue = true;                    
                     if (current.State == EntityState.Unchanged) {
                         current.State = EntityState.Modified;
                     }
@@ -433,10 +431,8 @@ namespace ASTV.Extenstions {
             var tt = source.ElementType; // How to get entry ? or context?
             var o = source.FirstOrDefault();
 
-            var set = o;       
-            if (set == null ) { Console.WriteLine("Set is null!");}         
-            var pred = set.EntityVersions();              
-            if (pred == null ) { Console.WriteLine("PRED is null!");}
+            var set = o;                            
+            var pred = set.EntityVersions();                          
             return source.Where(t => pred(t, entity));
 
         }
@@ -514,13 +510,10 @@ namespace ASTV.Extenstions {
             where TEntity : class 
         {
             Func< EntityEntry<TEntity>, TEntity, bool> f;
-            if (_ChangeTrackerFinderCache.ContainsKey(typeof(TEntity))) {
-                Console.WriteLine("HERE2");
+            if (_ChangeTrackerFinderCache.ContainsKey(typeof(TEntity))) {                
                 f = (Func< EntityEntry<TEntity>, TEntity, bool>)_ChangeTrackerFinderCache[typeof(TEntity)];                
             } else {
-                var ll = entry.Context.VersionKeyFunction<TEntity>()();
-                Console.WriteLine("HERE");
-                Console.WriteLine("Lambda to be used: {0}",ll.ToString());
+                var ll = entry.Context.VersionKeyFunction<TEntity>()();                
                 f = entry.Context.VersionKeyFunction<TEntity>()().Compile();                
                 _ChangeTrackerFinderCache.Add(typeof(TEntity),f);                
             }

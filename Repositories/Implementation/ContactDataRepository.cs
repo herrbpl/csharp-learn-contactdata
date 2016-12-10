@@ -16,6 +16,7 @@ namespace ASTV.Services {
     public interface IContactDataRepository: IEntityBaseRepositoryReadonly<ContactData, ContactDataContext> {
         void Update(ContactData entity);
     }
+
     public class ContactDataRepository: EntityBaseRepositoryReadOnly<ContactData, ContactDataContext>, IContactDataRepository                               
     {
         public ContactDataRepository(ContactDataContext context) : base(context) {            
@@ -54,6 +55,7 @@ namespace ASTV.Services {
         }
         
         public void Update(ContactData entity) {
+            _context.Update(entity);
             _logger.LogInformation("Update invoked");            
         }
     }
