@@ -5,9 +5,9 @@ using ASTV.Services;
 
 
 namespace ASTV.Services {
-    public interface ContactDataDefaultProvider: IEntityDefaultProvider<ContactData, System.String> {}
+    public interface IContactDataDefaultProvider: IEntityDefaultProvider<ContactData, System.String> {}
     
-    public class ContactDataTestProvider: ContactDataDefaultProvider {
+    public class ContactDataTestProvider: IContactDataDefaultProvider {
 
         public ContactData GetDefault() {
             return GetDefault(""); 

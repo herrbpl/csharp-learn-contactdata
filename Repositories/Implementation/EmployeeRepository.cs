@@ -93,7 +93,7 @@ namespace ASTV.Services {
                 return this._cache.Values.AsEnumerable();
                 
             } catch (Exception e) {
-                Console.WriteLine(e.Message);
+                
                 if (_cache != null) {
                     return _cache.Values.AsEnumerable();
                 } else {
@@ -118,7 +118,7 @@ namespace ASTV.Services {
                 return dbQuery.Where(where).ToList<Employee>().AsEnumerable();                            
 
             } catch (Exception e) {
-                Console.WriteLine(e.Message);
+                
                 //throw(e);
                 return new List<Employee>().AsEnumerable();                
             }
