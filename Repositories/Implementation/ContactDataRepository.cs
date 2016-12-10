@@ -53,9 +53,12 @@ namespace ASTV.Services {
         }
 
         public void Update(ContactData entity) {
-            // check that employee exists.
-            _context.Update(entity);
-            _logger.LogInformation("Update invoked");            
+
+            _context.Add(entity);
+            _logger.LogInformation("Update invoked");    
+            _context.printChangeTracker<ContactData>("After update!");
+            _context.SaveChanges();        
+            _context.printChangeTracker<ContactData>("After save!");
         }
     }
 }    

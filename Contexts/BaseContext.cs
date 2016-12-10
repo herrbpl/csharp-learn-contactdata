@@ -47,7 +47,7 @@ namespace ASTV.Services {
         }
 
         public override EntityEntry<TEntity> Update<TEntity>(TEntity entity)
-        {                                  
+        {                                              
             var entry = this.UpdateEntityVersion(entity);                                                                         
             return entry;
         }
